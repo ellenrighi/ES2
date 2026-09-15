@@ -1,9 +1,4 @@
-from src.presentation.chess_gui import ChessGUI
+from interface.actions.run import run
 
-
-def main() -> None:
-    ChessGUI().run()
-
-
-if __name__ == "__main__":
-    main()
+if __name__ == '__main__':
+    run()
