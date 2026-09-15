@@ -1,5 +1,6 @@
 import pygame
 
+from interface.components.draw_toggle import draw_toggle
 from interface.drawing.font import font
 from interface.drawing.load_icon import load_icon
 from interface.theme import ACCENT, BACKGROUND, MUTED, PANEL, TEXT
@@ -18,6 +19,10 @@ def draw_button(button, surface, mouse, focused):
     else:
         button.hover_progress = max(0, button.hover_progress - step)
     progress = button.hover_progress
+
+    if button.is_toggle:
+        draw_toggle(button, surface, focused, step)
+        return
 
     if not button.enabled:
         background, foreground = '#29332D', MUTED
