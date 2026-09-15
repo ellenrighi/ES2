@@ -1,10 +1,14 @@
 import pygame
 
 
-def handle_event(window, event, page, buttons, focused):
+def handle_event(window, event, page, buttons, focused, rules_parent='home'):
     selected = None
     if event.type == pygame.KEYDOWN:
-        if event.key == pygame.K_ESCAPE and page in ('modes', 'rules'):
+        if event.key == pygame.K_ESCAPE and page == 'rules':
+            return rules_parent, None
+        elif event.key == pygame.K_ESCAPE and page == 'multiplayer':
+            return 'modes', None
+        elif event.key == pygame.K_ESCAPE and page == 'modes':
             return 'home', None
         elif event.key == pygame.K_TAB:
             enabled = [i for i, button in enumerate(buttons) if button.enabled]
@@ -24,6 +28,11 @@ def handle_event(window, event, page, buttons, focused):
 
     if selected is not None:
         button = buttons[selected]
-        if button.enabled and button.action:
-            return button.action, None
+        if button.enabled:
+            if button.is_toggle:
+                button.checked = not button.checked
+            elif button.action == 'close_rules':
+                return rules_parent, None
+            elif button.action:
+                return button.action, None
     return page, focused

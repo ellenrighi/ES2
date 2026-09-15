@@ -4,7 +4,7 @@ from interface.components.button import Button
 from interface.drawing.font import font
 from interface.theme import ACCENT, MUTED, PANEL, TEXT
 
-RULES_BUTTONS = [Button(pygame.Rect(648, 55, 44, 44), '×', 'home')]
+RULES_BUTTONS = [Button(pygame.Rect(648, 55, 44, 44), '×', 'close_rules')]
 
 # Resumo das regras básicas: https://handbook.fide.com/chapter/E012023
 RULES = [
