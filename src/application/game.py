@@ -4,6 +4,7 @@ from src.domain.board import Board
 from src.domain.color import Color
 from src.domain.move import Move
 from src.domain.piece import Piece
+from src.ai.random_ai import choose_random_move
 
 
 class Game:
@@ -115,6 +116,17 @@ class Game:
         legal_moves = self.board.generate_moves_for_piece(row, col)
         self.legal_moves_by_dest = {m.end_pos: m for m in legal_moves}
         self.status_message = f"{self._piece_name(self.board.get_piece(row, col))} selecionada."
+    def play_ai_turn(self) -> None:
+        if self.current_turn is not Color.BLACK:
+             return
+
+        move = choose_random_move(self.board, Color.BLACK)
+
+        if move is None:
+            self.status_message = "A IA não possui movimentos disponíveis."
+            return
+
+        self._execute_and_advance(move)
 
     def _execute_and_advance(self, move: Move) -> None:
         """Executa um movimento valido e alterna o turno.

@@ -43,7 +43,7 @@ class ChessGUI:
         Retorno:
             None.
         """
-        self.window = Window(self.WIDTH, self.HEIGHT, "Xadrez V1 - Sem IA")
+        self.window = Window(self.WIDTH, self.HEIGHT, "Xadrez V1 - IA Aleatória")
         self.game = Game()
         self.mouse = self.window.mouse
         self.keyboard = self.window.keyboard
@@ -75,6 +75,8 @@ class ChessGUI:
             col = int(mx // self.CELL_SIZE)
             if 0 <= row < 8 and 0 <= col < 8:
                 self.game.handle_click(row, col)
+                if self.game.current_turn is Color.BLACK:
+                    self.game.play_ai_turn()
 
         if self.game.pending_promotion_move is not None:
             if self.keyboard.key_down("q"):
