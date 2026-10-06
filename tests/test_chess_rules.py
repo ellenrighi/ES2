@@ -60,6 +60,33 @@ class ChessRulesTests(unittest.TestCase):
         self.assertIsInstance(promoted, Rook)
         self.assertEqual(game.current_turn, Color.BLACK)
 
+    def test_pinned_piece_cannot_expose_king(self):
+        board = Board()
+        board.grid = [[None for _ in range(8)] for _ in range(8)]
+
+        board.set_piece(7, 4, King(Color.WHITE))
+        board.set_piece(6, 4, Rook(Color.WHITE))
+        board.set_piece(0, 4, Rook(Color.BLACK))
+
+        moves = board.generate_moves_for_piece(6, 4)
+
+        self.assertFalse(
+            any(move.end_pos == (6, 3) for move in moves)
+        )
+
+    def test_king_cannot_move_into_check(self):
+        board = Board()
+        board.grid = [[None for _ in range(8)] for _ in range(8)]
+
+        board.set_piece(7, 4, King(Color.WHITE))
+        board.set_piece(6, 0, Rook(Color.BLACK))
+
+        moves = board.generate_moves_for_piece(7, 4)
+
+        self.assertFalse(
+            any(move.end_pos == (6, 4) for move in moves)
+        )
+    
     def test_pawn_basic_movement_rules(self):
         # Valida o movimento base do peao, incluindo avanco e captura.
         self.skipTest("Pendente: cobertura detalhada das regras basicas do peao.")
