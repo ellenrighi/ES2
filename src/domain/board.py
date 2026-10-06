@@ -26,6 +26,60 @@ class Board:
         self.en_passant_target: tuple[int, int] | None = None
         self.setup_initial_position()
 
+    def copy(self) -> "Board":
+        """Cria uma copia independente do estado atual do tabuleiro."""
+        cloned = Board()
+        cloned.grid = [
+            [piece.copy() if piece is not None else None for piece in row]
+            for row in self.grid
+        ]
+        cloned.en_passant_target = self.en_passant_target
+        return cloned
+
+    def find_king(self, color: Color) -> tuple[int, int] | None:
+        """Encontra a posição do rei de uma determinada cor."""
+        for row in range(8):
+            for col in range(8):
+                piece = self.get_piece(row, col)
+
+                if isinstance(piece, King) and piece.color is color:
+                    return (row, col)
+
+        return None
+
+    def would_leave_king_in_check(self, move: Move) -> bool:
+        """Verifica se uma jogada deixaria o próprio rei em xeque."""
+        piece = self.get_piece(*move.start_pos)
+
+        if piece is None:
+            return True
+
+        test_board = self.copy()
+
+        test_move = Move(
+            start_pos=move.start_pos,
+            end_pos=move.end_pos,
+            is_castling=move.is_castling,
+            is_en_passant=move.is_en_passant,
+            requires_promotion=move.requires_promotion,
+            promotion_piece=move.promotion_piece,
+        )
+
+        if test_move.requires_promotion and test_move.promotion_piece is None:
+            test_move.promotion_piece = "Q"
+
+        test_board.execute_move(test_move)
+
+        king_pos = test_board.find_king(piece.color)
+
+        if king_pos is None:
+            return False
+
+        return test_board.is_square_attacked(
+            king_pos,
+            piece.color.opposite()
+        )
+    
     def setup_initial_position(self) -> None:
         """Configura o tabuleiro com a disposicao inicial das pecas.
 
@@ -125,18 +179,19 @@ class Board:
         return p is not None and p.color is not color
 
     def generate_moves_for_piece(self, row: int, col: int) -> list[Move]:
-        """Gera movimentos legais para a peca em uma coordenada.
-
-        Parametros:
-            row (int): Linha da peca.
-            col (int): Coluna da peca.
-        Retorno:
-            list[Move]: Movimentos possiveis da peca; lista vazia quando nao ha peca.
-        """
+        """Gera movimentos legais para a peca em uma coordenada."""
         piece = self.get_piece(row, col)
+
         if piece is None:
             return []
-        return piece.generate_moves(self, row, col)
+
+        candidate_moves = piece.generate_moves(self, row, col)
+
+        return [
+            move
+            for move in candidate_moves
+            if not self.would_leave_king_in_check(move)
+        ]
 
     def castling_moves_for_king(self, row: int, col: int, king: King) -> list[Move]:
         """Calcula movimentos de roque validos para um rei.
