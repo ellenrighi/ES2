@@ -1,7 +1,31 @@
 import pygame
 
+from interface.components.draw_board import BOARD, SQUARE_SIZE
+from interface.components.promotion_popup import PROMOTION_OPTIONS
 
-def handle_event(window, event, page, buttons, focused, rules_parent='home'):
+
+def handle_event(window, event, page, buttons, focused, rules_parent='home', game=None):
+    if page == 'multiplayer' and game is not None:
+        if game.pending_promotion_move is not None:
+            code = None
+            if event.type == pygame.KEYDOWN:
+                code = {pygame.K_q: 'Q', pygame.K_r: 'R',
+                        pygame.K_b: 'B', pygame.K_n: 'N'}.get(event.key)
+            elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                position = window.screen_to_virtual_coords(*event.pos)
+                code = next((code for code, button in PROMOTION_OPTIONS
+                             if button.rect.collidepoint(position)), None)
+            if code:
+                game.choose_promotion(code)
+            return page, None
+        if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+            position = window.screen_to_virtual_coords(*event.pos)
+            if BOARD.collidepoint(position):
+                column = int((position[0] - BOARD.x) // SQUARE_SIZE)
+                row = int((position[1] - BOARD.y) // SQUARE_SIZE)
+                game.handle_click(row, column)
+                return page, None
+
     selected = None
     if event.type == pygame.KEYDOWN:
         if event.key == pygame.K_ESCAPE and page == 'rules':

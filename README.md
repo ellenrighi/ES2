@@ -34,15 +34,17 @@ O PPlay já está incluído no repositório.
 ## Telas e controles
 
 - **Jogar** abre a seleção de modo.
-- **Multiplayer** abre o tabuleiro centralizado, sem legendas, com um rodapé vazio.
+- **Multiplayer** abre uma partida local para duas pessoas no mesmo computador. Clique em uma peça e depois no destino para mover ou capturar. O rodapé informa o turno e o resultado da ação.
 - **Regras**, na tela inicial, e o **ícone de livro**, no tabuleiro, abrem o resumo com fundo semitransparente. O **×** ou **Esc** fecha o pop-up e retorna à tela de origem.
-- O interruptor **Dicas**, no cabeçalho, está desabilitado por enquanto e não gera sugestões de jogadas.
+- O interruptor **Dicas**, no cabeçalho, mostra ou oculta os destinos permitidos para a peça selecionada.
 - **Vs IA** permanece desativado.
 - A **seta no canto superior esquerdo** ou **Esc** volta do tabuleiro à seleção de modo e da seleção à tela inicial.
 - Use o mouse ou **Tab / Shift+Tab** e **Enter / Espaço** para navegar pelos botões ativos.
 - Feche a janela para sair. A interface se adapta ao tamanho da janela mantendo as proporções.
 
-Esta etapa contém três telas e um pop-up de regras. O tabuleiro mostra 32 peças na posição inicial, sem movimentação. Não há motor de xadrez, partidas, rede ou inteligência artificial.
+O tabuleiro usa o estado da partida e as regras do backend, incluindo capturas, roque, en passant e bloqueio de jogadas que exponham o próprio rei. Na promoção, escolha uma peça no pop-up ou use Q (dama), R (torre), B (bispo) ou N (cavalo). Abrir as regras ou voltar aos menus preserva a partida durante a execução. Reiniciar o aplicativo inicia outra partida.
+
+O modo contra IA ainda não está conectado à interface. Não há multiplayer online nem encerramento automático por xeque-mate ou empate.
 
 ## Organização dos arquivos
 

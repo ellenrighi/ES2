@@ -1,15 +1,15 @@
 import pygame
 
 from interface.components.draw_piece import draw_piece
-from interface.theme import PANEL
+from interface.theme import ACCENT, PANEL
+from src.domain.color import Color
 
 BOARD = pygame.Rect(192, 96, 416, 416)
 SQUARE_SIZE = 52
-BACK_RANK = ('rook', 'knight', 'bishop', 'queen', 'king', 'bishop', 'knight', 'rook')
 
 
-def draw_board(surface):
-    """Desenha a posição inicial; as peças ainda não são interativas."""
+def draw_board(surface, game, show_hints=True):
+    """Desenha as peças e a seleção a partir do estado da partida."""
     pygame.draw.rect(surface, PANEL, BOARD.inflate(20, 20), border_radius=12)
     for row in range(8):
         for column in range(8):
@@ -17,7 +17,14 @@ def draw_board(surface):
                                  BOARD.y + row * SQUARE_SIZE, SQUARE_SIZE, SQUARE_SIZE)
             color = '#ACB99A' if (row + column) % 2 == 0 else '#526B54'
             pygame.draw.rect(surface, color, square)
-            if row in (0, 7):
-                draw_piece(surface, BACK_RANK[column], 'black' if row == 0 else 'white', square.center)
-            elif row in (1, 6):
-                draw_piece(surface, 'pawn', 'black' if row == 1 else 'white', square.center)
+            piece = game.get_piece(row, column)
+            if piece is not None:
+                side = 'white' if piece.color is Color.WHITE else 'black'
+                draw_piece(surface, type(piece).__name__.lower(), side, square.center)
+            if game.selected_square == (row, column):
+                pygame.draw.rect(surface, ACCENT, square.inflate(-4, -4), 3)
+            if show_hints and (row, column) in game.legal_moves_by_dest:
+                if piece is None:
+                    pygame.draw.circle(surface, ACCENT, square.center, 6)
+                else:
+                    pygame.draw.rect(surface, ACCENT, square.inflate(-4, -4), 3)
