@@ -24,6 +24,11 @@ class Game:
         Retorno:
             None.
         """
+        self.reset()
+
+    def reset(self) -> None:
+        """Inicia uma partida vazia de histórico, na posição inicial."""
+        self.move_count = 0
         self.board = Board()
         self.current_turn = Color.WHITE
         self.selected_square: tuple[int, int] | None = None
@@ -116,7 +121,7 @@ class Game:
         legal_moves = self.board.generate_moves_for_piece(row, col)
         self.legal_moves_by_dest = {m.end_pos: m for m in legal_moves}
         self.status_message = f"{self._piece_name(self.board.get_piece(row, col))} selecionada."
-    def play_ai_turn(self) -> None:
+    def play_ai_turn(self) -> Move | None:
         if self.current_turn is not Color.BLACK:
              return
 
@@ -126,7 +131,10 @@ class Game:
             self.status_message = "A IA não possui movimentos disponíveis."
             return
 
+        if move.requires_promotion:
+            move.promotion_piece = "Q"
         self._execute_and_advance(move)
+        return move
 
     def _execute_and_advance(self, move: Move) -> None:
         """Executa um movimento valido e alterna o turno.
@@ -137,6 +145,7 @@ class Game:
             None.
         """
         self.board.execute_move(move)
+        self.move_count += 1
         self.selected_square = None
         self.legal_moves_by_dest = {}
         self.current_turn = self.current_turn.opposite()

@@ -14,9 +14,16 @@ MULTIPLAYER_BUTTONS = [
 ]
 
 
-def draw_multiplayer(surface, game):
-    draw_board(surface, game, HINTS_BUTTON.checked)
-    surface.blit(font(28, True).render('Multiplayer', True, TEXT), (100, 30))
+AI_BUTTONS = [
+    Button(pygame.Rect(32, 24, 48, 48), 'Voltar', 'ai_levels', icon='arrow-left.png'),
+    Button(pygame.Rect(720, 24, 48, 48), 'Regras', 'rules', icon='book-2.png'),
+    HINTS_BUTTON,
+]
+
+
+def draw_multiplayer(surface, game, title='Multiplayer', animation=None):
+    draw_board(surface, game, HINTS_BUTTON.checked, animation)
+    surface.blit(font(28, True).render(title, True, TEXT), (100, 30))
     pygame.draw.rect(surface, PANEL, (32, 542, 736, 42), border_radius=12)
     turn = 'Brancas' if game.current_turn is Color.WHITE else 'Pretas'
     surface.blit(font(18, True).render(f'Turno: {turn}', True, TEXT), (48, 553))
