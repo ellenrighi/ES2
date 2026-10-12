@@ -47,6 +47,13 @@ class Board:
 
         return None
 
+    def is_in_check(self, color: Color) -> bool:
+        """Verifica se o rei de uma determinada cor esta atualmente em xeque."""
+        king_pos = self.find_king(color)
+        if king_pos is None:
+            return False
+        return self.is_square_attacked(king_pos, color.opposite())
+
     def would_leave_king_in_check(self, move: Move) -> bool:
         """Verifica se uma jogada deixaria o próprio rei em xeque."""
         piece = self.get_piece(*move.start_pos)
@@ -79,7 +86,7 @@ class Board:
             king_pos,
             piece.color.opposite()
         )
-    
+
     def setup_initial_position(self) -> None:
         """Configura o tabuleiro com a disposicao inicial das pecas.
 
