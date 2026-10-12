@@ -128,8 +128,22 @@ class ChessRulesTests(unittest.TestCase):
         self.skipTest("Pendente: promocao para Q, R, B e N.")
 
     def test_check_detection(self):
-        # Prepara a base para detectar xeque sem avancar para mate.
-        self.skipTest("Pendente: deteccao de xeque.")
+        # 1. Posição inicial: nenhum rei deve estar em xeque
+        board = Board()
+        self.assertFalse(board.is_in_check(Color.WHITE))
+        self.assertFalse(board.is_in_check(Color.BLACK))
+
+        # 2. Configuração customizada: Rei em xeque direto
+        board.grid = [[None for _ in range(8)] for _ in range(8)]
+        board.set_piece(7, 4, King(Color.WHITE))
+        board.set_piece(0, 4, Rook(Color.BLACK))
+
+        self.assertTrue(board.is_in_check(Color.WHITE))
+        self.assertFalse(board.is_in_check(Color.BLACK))
+
+        # 3. Ataque bloqueado: Peça no meio do caminho impede o xeque
+        board.set_piece(6, 4, Pawn(Color.WHITE))
+        self.assertFalse(board.is_in_check(Color.WHITE))
 
     def test_checkmate_detection(self):
         # Prepara a base para validar xeque-mate e fim de jogo.
