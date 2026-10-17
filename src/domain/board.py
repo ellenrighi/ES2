@@ -54,6 +54,25 @@ class Board:
             return False
         return self.is_square_attacked(king_pos, color.opposite())
 
+    def has_legal_moves(self, color: Color) -> bool:
+        """Verifica se o jogador de uma determinada cor possui ao menos um movimento legal."""
+        for r in range(8):
+            for c in range(8):
+                piece = self.get_piece(r, c)
+                if piece is not None and piece.color is color:
+                    moves = self.generate_moves_for_piece(r, c)
+                    if moves:  # Encontrou pelo menos 1 movimento legal valido
+                        return True
+        return False
+
+    def is_checkmate(self, color: Color) -> bool:
+        """Verifica se o jogador de uma determinada cor esta em xeque-mate."""
+        return self.is_in_check(color) and not self.has_legal_moves(color)
+
+    def is_stalemate(self, color: Color) -> bool:
+        """Verifica se o jogador de uma determinada cor esta afogado (empate por falta de lances)."""
+        return not self.is_in_check(color) and not self.has_legal_moves(color)
+
     def would_leave_king_in_check(self, move: Move) -> bool:
         """Verifica se uma jogada deixaria o próprio rei em xeque."""
         piece = self.get_piece(*move.start_pos)
