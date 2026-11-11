@@ -4,7 +4,7 @@ from src.application.game import Game
 from src.domain.board import Board
 from src.domain.color import Color
 from src.domain.move import Move
-from src.domain.piece import King, Pawn, Rook
+from src.domain.piece import King, Pawn, Rook, Queen, Bishop
 
 
 class ChessRulesTests(unittest.TestCase):
@@ -146,12 +146,37 @@ class ChessRulesTests(unittest.TestCase):
         self.assertFalse(board.is_in_check(Color.WHITE))
 
     def test_checkmate_detection(self):
-        # Prepara a base para validar xeque-mate e fim de jogo.
-        self.skipTest("Pendente: deteccao de xeque-mate.")
+        board = Board()
+        board.grid = [[None for _ in range(8)] for _ in range(8)]
+
+        # Posiciona um Rei Branco no canto (7, 7)
+        board.set_piece(7, 7, King(Color.WHITE))
+        # Posiciona Rei Negro para dar suporte
+        board.set_piece(5, 7, King(Color.BLACK))
+        # Rainha Negra entrega xeque-mate em (6, 7)
+        board.set_piece(6, 7, Queen(Color.BLACK))
+
+        # 1. Deve identificar Xeque-Mate no Rei Branco
+        self.assertTrue(board.is_checkmate(Color.WHITE))
+        # 2. O Rei Negro não está em xeque-mate
+        self.assertFalse(board.is_checkmate(Color.BLACK))
 
     def test_stalemate_detection(self):
-        # Prepara a base para validar afogamento sem xeque.
-        self.skipTest("Pendente: deteccao de afogamento.")
+        board = Board()
+        board.grid = [[None for _ in range(8)] for _ in range(8)]
+
+        # Posiciona o Rei Branco no canto (7, 7) sem movimentos legais
+        board.set_piece(7, 7, King(Color.WHITE))
+        # Rei Negro em (5, 6) e Rainha Negra em (6, 5) tiram todas as casas sem dar xeque direto
+        board.set_piece(5, 6, King(Color.BLACK))
+        board.set_piece(6, 5, Queen(Color.BLACK))
+
+        # 1. O Rei Branco NÃO está em xeque
+        self.assertFalse(board.is_in_check(Color.WHITE))
+        # 2. O Rei Branco está afogado (Stalemate)
+        self.assertTrue(board.is_stalemate(Color.WHITE))
+        # 3. Não deve ser considerado Xeque-Mate
+        self.assertFalse(board.is_checkmate(Color.WHITE))
 
     def test_insufficient_material_detection(self):
         # Valida o empate por material insuficiente.
