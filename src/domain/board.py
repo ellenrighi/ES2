@@ -223,6 +223,27 @@ class Board:
             if not self.would_leave_king_in_check(move)
         ]
 
+    def generate_successors(self, color: Color) -> list[tuple[Move, "Board"]]:
+        """Gera os estados possiveis a partir das jogadas legais de uma cor."""
+        successors = []
+
+        for row in range(8):
+            for col in range(8):
+                piece = self.get_piece(row, col)
+
+                if piece is None or piece.color is not color:
+                    continue
+
+                moves = self.generate_moves_for_piece(row, col)
+
+                for move in moves:
+                    # Cria uma copia para testar a jogada sem alterar o tabuleiro atual.
+                    new_board = self.copy()
+                    new_board.execute_move(move)
+                    successors.append((move, new_board))
+
+        return successors
+
     def castling_moves_for_king(self, row: int, col: int, king: King) -> list[Move]:
         """Calcula movimentos de roque validos para um rei.
 

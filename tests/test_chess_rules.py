@@ -9,6 +9,7 @@ from src.domain.piece import King, Pawn, Rook, Queen, Bishop
 
 class ChessRulesTests(unittest.TestCase):
     """ Testes unitarios para verificar regras de xadrez e fluxo de jogo."""
+
     def test_initial_setup_has_kings_and_pawns(self):
         board = Board()
         self.assertIsInstance(board.get_piece(7, 4), King)
@@ -74,6 +75,38 @@ class ChessRulesTests(unittest.TestCase):
 
         self.assertIsInstance(restored_pawn, Pawn)
         self.assertFalse(restored_pawn.has_moved)
+
+    def test_generate_successors_returns_legal_moves(self):
+        # Confere se sao gerados estados a partir das jogadas legais.
+        board = Board()
+
+        successors = board.generate_successors(Color.WHITE)
+
+        self.assertGreater(len(successors), 0)
+
+        for move, new_board in successors:
+            self.assertIsInstance(move, Move)
+            self.assertIsInstance(new_board, Board)
+
+    def test_generate_successors_does_not_change_original_board(self):
+        # Garante que gerar sucessores nao altera o tabuleiro atual.
+        board = Board()
+
+        board.generate_successors(Color.WHITE)
+
+        self.assertIsInstance(board.get_piece(6, 4), Pawn)
+        self.assertIsNone(board.get_piece(4, 4))
+
+    def test_generate_successors_applies_move_on_copy(self):
+        # Confere se cada sucessor representa uma jogada aplicada em uma copia.
+        board = Board()
+
+        successors = board.generate_successors(Color.WHITE)
+
+        move, new_board = successors[0]
+
+        self.assertIsNone(new_board.get_piece(*move.start_pos))
+        self.assertIsNotNone(new_board.get_piece(*move.end_pos))
 
     def test_castling_kingside_available_when_path_clear(self):
         board = Board()
