@@ -37,6 +37,44 @@ class ChessRulesTests(unittest.TestCase):
         self.assertIsNone(board.get_piece(3, 5))
         self.assertIsNotNone(board.get_piece(2, 5))
 
+    def test_undo_move_restores_previous_position(self):
+        # Faz uma jogada e confere se o tabuleiro volta ao estado anterior.
+        board = Board()
+
+        board.execute_move(Move(start_pos=(6, 4), end_pos=(4, 4)))
+        board.undo_move()
+
+        self.assertIsInstance(board.get_piece(6, 4), Pawn)
+        self.assertIsNone(board.get_piece(4, 4))
+
+    def test_undo_move_restores_captured_piece(self):
+        # Confere se uma peca capturada volta ao desfazer a jogada.
+        board = Board()
+        board.grid = [[None for _ in range(8)] for _ in range(8)]
+
+        board.set_piece(4, 4, Rook(Color.WHITE))
+        board.set_piece(4, 6, Pawn(Color.BLACK))
+
+        board.execute_move(Move(start_pos=(4, 4), end_pos=(4, 6)))
+        board.undo_move()
+
+        self.assertIsInstance(board.get_piece(4, 4), Rook)
+        self.assertIsInstance(board.get_piece(4, 6), Pawn)
+
+    def test_undo_move_restores_piece_state(self):
+        # Confere se a peca tambem recupera o estado de antes da jogada.
+        board = Board()
+
+        board.execute_move(Move(start_pos=(6, 4), end_pos=(4, 4)))
+        moved_pawn = board.get_piece(4, 4)
+        self.assertTrue(moved_pawn.has_moved)
+
+        board.undo_move()
+        restored_pawn = board.get_piece(6, 4)
+
+        self.assertIsInstance(restored_pawn, Pawn)
+        self.assertFalse(restored_pawn.has_moved)
+
     def test_castling_kingside_available_when_path_clear(self):
         board = Board()
         board.set_piece(7, 5, None)
@@ -86,7 +124,7 @@ class ChessRulesTests(unittest.TestCase):
         self.assertFalse(
             any(move.end_pos == (6, 4) for move in moves)
         )
-    
+
     def test_pawn_basic_movement_rules(self):
         # Valida o movimento base do peao, incluindo avanco e captura.
         self.skipTest("Pendente: cobertura detalhada das regras basicas do peao.")

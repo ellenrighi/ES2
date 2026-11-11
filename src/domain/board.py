@@ -24,6 +24,10 @@ class Board:
         """
         self.grid: list[list[Piece | None]] = [[None for _ in range(8)] for _ in range(8)]
         self.en_passant_target: tuple[int, int] | None = None
+        # Guarda os estados anteriores do tabuleiro para permitir desfazer jogadas.
+        self._history: list[
+            tuple[list[list[Piece | None]], tuple[int, int] | None]
+        ] = []
         self.setup_initial_position()
 
     def copy(self) -> "Board":
@@ -253,6 +257,23 @@ class Board:
 
         return result
 
+    def _save_state(self) -> None:
+        """Guarda uma copia do estado atual antes de executar uma jogada."""
+        grid_copy = [
+            [piece.copy() if piece is not None else None for piece in row]
+            for row in self.grid
+        ]
+        self._history.append((grid_copy, self.en_passant_target))
+
+    def undo_move(self) -> None:
+        """Volta o tabuleiro para o estado anterior."""
+        if not self._history:
+            raise ValueError("Nao existe movimento para desfazer.")
+
+        previous_grid, previous_en_passant_target = self._history.pop()
+        self.grid = previous_grid
+        self.en_passant_target = previous_en_passant_target
+
     def execute_move(self, move: Move) -> None:
         """Executa um movimento no tabuleiro, incluindo regras especiais.
 
@@ -270,6 +291,8 @@ class Board:
         if move.requires_promotion and move.promotion_piece is None:
             raise ValueError("Promocao obrigatoria sem escolha de peca.")
 
+        # Salva o estado antes da jogada para que ela possa ser desfeita depois.
+        self._save_state()
         self.en_passant_target = None
 
         if move.is_en_passant:
