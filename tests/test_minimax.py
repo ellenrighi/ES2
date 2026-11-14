@@ -1,7 +1,12 @@
 import unittest
 from unittest.mock import MagicMock, patch
 
-from src.ai.minimax import minimax, expand_node, choose_minimax_move
+from src.ai.minimax import (
+    minimax,
+    expand_node,
+    choose_minimax_move,
+    validate_depth,
+)
 from src.ai.board_evaluation import evaluate_board, CHECKMATE_SCORE
 from src.domain.board import Board
 from src.domain.color import Color
@@ -163,6 +168,42 @@ class MinimaxTests(unittest.TestCase):
         )
 
         self.assertIsNone(best_move)
+
+    def test_validate_depth_accepts_positive_depth(self):
+        # Profundidades a partir de 1 podem ser usadas na busca.
+        validate_depth(1)
+        validate_depth(3)
+
+    def test_validate_depth_rejects_zero(self):
+        # A busca nao deve comecar com profundidade zero.
+        with self.assertRaises(ValueError):
+            validate_depth(0)
+
+    @patch("src.ai.minimax.minimax")
+    def test_choose_move_reduces_depth_before_recursion(self, mock_minimax):
+        # Depois da primeira jogada, o nivel seguinte recebe profundidade menor.
+        board = MagicMock()
+        move = Move((6, 0), (5, 0))
+        new_board = MagicMock()
+
+        board.generate_successors.return_value = [
+            (move, new_board)
+        ]
+
+        mock_minimax.return_value = 10
+
+        choose_minimax_move(
+            board,
+            Color.WHITE,
+            depth=3
+        )
+
+        mock_minimax.assert_called_once_with(
+            new_board,
+            2,
+            False,
+            Color.WHITE
+        )
 
 
 if __name__ == "__main__":

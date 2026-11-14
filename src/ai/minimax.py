@@ -7,6 +7,12 @@ def expand_node(board, color: Color):
     return board.generate_successors(color)
 
 
+def validate_depth(depth: int) -> None:
+    # A busca precisa analisar pelo menos um nivel da arvore.
+    if depth < 1:
+        raise ValueError("A profundidade deve ser maior ou igual a 1.")
+
+
 def minimax(board, depth: int, maximizing: bool, ai_color: Color) -> int:
     # Quando chega na profundidade definida, avalia o tabuleiro.
     if depth == 0:
@@ -53,6 +59,9 @@ def minimax(board, depth: int, maximizing: bool, ai_color: Color) -> int:
 
 
 def choose_minimax_move(board, ai_color: Color, depth: int):
+    # Confere se a profundidade informada pode ser usada na busca.
+    validate_depth(depth)
+
     # Procura a melhor jogada disponivel para a IA.
     successors = expand_node(board, ai_color)
 
