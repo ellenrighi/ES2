@@ -1,10 +1,11 @@
 import unittest
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
-from src.ai.minimax import minimax, expand_node
+from src.ai.minimax import minimax, expand_node, choose_minimax_move
 from src.ai.board_evaluation import evaluate_board, CHECKMATE_SCORE
 from src.domain.board import Board
 from src.domain.color import Color
+from src.domain.move import Move
 
 
 class MinimaxTests(unittest.TestCase):
@@ -72,6 +73,96 @@ class MinimaxTests(unittest.TestCase):
         value = evaluate_board(board, Color.WHITE)
 
         self.assertEqual(value, CHECKMATE_SCORE)
+
+    @patch("src.ai.minimax.evaluate_board")
+    def test_maximizing_propagates_highest_value(self, mock_evaluate):
+        # O nivel MAX deve escolher o maior valor entre os sucessores.
+        board = MagicMock()
+
+        board_1 = MagicMock()
+        board_2 = MagicMock()
+        board_3 = MagicMock()
+
+        board.generate_successors.return_value = [
+            (None, board_1),
+            (None, board_2),
+            (None, board_3),
+        ]
+
+        mock_evaluate.side_effect = [10, 30, 20]
+
+        value = minimax(
+            board,
+            depth=1,
+            maximizing=True,
+            ai_color=Color.WHITE
+        )
+
+        self.assertEqual(value, 30)
+
+    @patch("src.ai.minimax.evaluate_board")
+    def test_minimizing_propagates_lowest_value(self, mock_evaluate):
+        # O nivel MIN deve escolher o menor valor entre os sucessores.
+        board = MagicMock()
+
+        board_1 = MagicMock()
+        board_2 = MagicMock()
+        board_3 = MagicMock()
+
+        board.generate_successors.return_value = [
+            (None, board_1),
+            (None, board_2),
+            (None, board_3),
+        ]
+
+        mock_evaluate.side_effect = [10, 30, 20]
+
+        value = minimax(
+            board,
+            depth=1,
+            maximizing=False,
+            ai_color=Color.WHITE
+        )
+
+        self.assertEqual(value, 10)
+
+    @patch("src.ai.minimax.minimax")
+    def test_choose_minimax_move_selects_best_move(self, mock_minimax):
+        # Confere se a IA escolhe a jogada com maior valor.
+        board = MagicMock()
+
+        move_1 = Move((6, 0), (5, 0))
+        move_2 = Move((6, 1), (4, 1))
+        move_3 = Move((6, 2), (5, 2))
+
+        board.generate_successors.return_value = [
+            (move_1, MagicMock()),
+            (move_2, MagicMock()),
+            (move_3, MagicMock()),
+        ]
+
+        mock_minimax.side_effect = [10, 50, 20]
+
+        best_move = choose_minimax_move(
+            board,
+            Color.WHITE,
+            depth=2
+        )
+
+        self.assertEqual(best_move, move_2)
+
+    def test_choose_minimax_move_returns_none_without_moves(self):
+        # Se nao houver jogadas legais, nenhuma jogada deve ser retornada.
+        board = MagicMock()
+        board.generate_successors.return_value = []
+
+        best_move = choose_minimax_move(
+            board,
+            Color.WHITE,
+            depth=2
+        )
+
+        self.assertIsNone(best_move)
 
 
 if __name__ == "__main__":

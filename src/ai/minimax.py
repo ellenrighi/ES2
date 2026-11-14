@@ -50,3 +50,28 @@ def minimax(board, depth: int, maximizing: bool, ai_color: Color) -> int:
         best_value = min(best_value, value)
 
     return best_value
+
+
+def choose_minimax_move(board, ai_color: Color, depth: int):
+    # Procura a melhor jogada disponivel para a IA.
+    successors = expand_node(board, ai_color)
+
+    if not successors:
+        return None
+
+    best_move = None
+    best_value = float("-inf")
+
+    for move, new_board in successors:
+        value = minimax(
+            new_board,
+            depth - 1,
+            False,
+            ai_color
+        )
+
+        if value > best_value:
+            best_value = value
+            best_move = move
+
+    return best_move
