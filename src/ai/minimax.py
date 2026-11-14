@@ -1,4 +1,5 @@
 from src.domain.color import Color
+from src.ai.board_evaluation import evaluate_board
 
 
 def expand_node(board, color: Color):
@@ -7,9 +8,9 @@ def expand_node(board, color: Color):
 
 
 def minimax(board, depth: int, maximizing: bool, ai_color: Color) -> int:
-    # Para a recursao quando chega na profundidade definida.
+    # Quando chega na profundidade definida, avalia o tabuleiro.
     if depth == 0:
-        return 0
+        return evaluate_board(board, ai_color)
 
     # Escolhe a cor que deve jogar neste nivel da arvore.
     current_color = ai_color if maximizing else ai_color.opposite()
@@ -17,9 +18,9 @@ def minimax(board, depth: int, maximizing: bool, ai_color: Color) -> int:
     # Expande o no atual gerando os proximos estados.
     successors = expand_node(board, current_color)
 
-    # Se nao houver movimentos, encerra este caminho.
+    # Se nao houver movimentos, avalia o estado atual.
     if not successors:
-        return 0
+        return evaluate_board(board, ai_color)
 
     if maximizing:
         best_value = float("-inf")
