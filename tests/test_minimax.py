@@ -1,6 +1,6 @@
 import unittest
 
-from src.ai.minimax import minimax
+from src.ai.minimax import minimax, expand_node
 from src.domain.board import Board
 from src.domain.color import Color
 
@@ -32,6 +32,14 @@ class MinimaxTests(unittest.TestCase):
         )
 
         self.assertEqual(value, 0)
+
+    def test_expand_node_generates_successors(self):
+        # Confere se a expansao gera os proximos estados possiveis.
+        board = Board()
+
+        successors = expand_node(board, Color.WHITE)
+
+        self.assertGreater(len(successors), 0)
 
 
 if __name__ == "__main__":

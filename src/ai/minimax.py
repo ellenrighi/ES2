@@ -1,6 +1,11 @@
 from src.domain.color import Color
 
 
+def expand_node(board, color: Color):
+    # Gera todos os estados possiveis a partir das jogadas legais.
+    return board.generate_successors(color)
+
+
 def minimax(board, depth: int, maximizing: bool, ai_color: Color) -> int:
     # Para a recursao quando chega na profundidade definida.
     if depth == 0:
@@ -9,8 +14,8 @@ def minimax(board, depth: int, maximizing: bool, ai_color: Color) -> int:
     # Escolhe a cor que deve jogar neste nivel da arvore.
     current_color = ai_color if maximizing else ai_color.opposite()
 
-    # Gera os proximos estados possiveis.
-    successors = board.generate_successors(current_color)
+    # Expande o no atual gerando os proximos estados.
+    successors = expand_node(board, current_color)
 
     # Se nao houver movimentos, encerra este caminho.
     if not successors:
