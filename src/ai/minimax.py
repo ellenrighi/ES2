@@ -1,10 +1,37 @@
 from src.domain.color import Color
 from src.ai.board_evaluation import evaluate_board
+from src.ai.material_evaluation import PIECE_VALUES
 
 
 def expand_node(board, color: Color):
-    # Gera todos os estados possiveis a partir das jogadas legais.
-    return board.generate_successors(color)
+    # Gera e ordena capturas antes dos movimentos sem captura. Antecipa o momento de poda alfa-beta, priorizando movimentos que capturam peças mais valiosas.
+    successors = board.generate_successors(color)
+    return sorted(
+        successors,
+        key=lambda successor: _move_order_score(board, successor[0]),
+        reverse=True,
+    )
+
+
+def _move_order_score(board, move) -> int:
+    # Retorna uma pontuacao para o movimento, priorizando capturas de pecas mais valiosas.
+    attacker = board.get_piece(*move.start_pos)
+    if attacker is None:
+        return 0
+
+    if move.is_en_passant:
+        end_row, end_col = move.end_pos
+        capture_row = end_row + (1 if attacker.color is Color.WHITE else -1)
+        victim = board.get_piece(capture_row, end_col)
+    else:
+        victim = board.get_piece(*move.end_pos)
+
+    if victim is None:
+        return 0
+
+    attacker_value = PIECE_VALUES.get(type(attacker), 0)
+    victim_value = PIECE_VALUES.get(type(victim), 0)
+    return victim_value * 10 - attacker_value
 
 
 def validate_depth(depth: int) -> None:
