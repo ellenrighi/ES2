@@ -79,6 +79,8 @@ def choose_minimax_move(board, ai_color: Color, depth: int):
 
     best_move = None
     best_value = float("-inf")
+    alfa = float("-inf")
+    beta = float("inf")
 
     for move, new_board in successors:
         value = minimax(
@@ -86,12 +88,13 @@ def choose_minimax_move(board, ai_color: Color, depth: int):
             depth - 1,
             False,
             ai_color,
-            float("-inf"),
-            float("inf")
+            alfa,
+            beta
         )
 
         if value > best_value:
             best_value = value
             best_move = move
+        alfa = max(alfa, best_value)
 
     return best_move
