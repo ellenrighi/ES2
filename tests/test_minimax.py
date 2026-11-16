@@ -1,5 +1,5 @@
 import unittest
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock, call, patch
 
 from src.ai.minimax import (
     minimax,
@@ -23,7 +23,9 @@ class MinimaxTests(unittest.TestCase):
             board,
             depth=0,
             maximizing=True,
-            ai_color=Color.WHITE
+            ai_color=Color.WHITE,
+            alfa=float("-inf"),
+            beta=float("inf")
         )
 
         self.assertEqual(value, evaluate_board(board, Color.WHITE))
@@ -36,7 +38,9 @@ class MinimaxTests(unittest.TestCase):
             board,
             depth=2,
             maximizing=True,
-            ai_color=Color.WHITE
+            ai_color=Color.WHITE,
+            alfa=float("-inf"),
+            beta=float("inf")
         )
 
         self.assertIsInstance(value, (int, float))
@@ -100,7 +104,9 @@ class MinimaxTests(unittest.TestCase):
             board,
             depth=1,
             maximizing=True,
-            ai_color=Color.WHITE
+            ai_color=Color.WHITE,
+            alfa=float("-inf"),
+            beta=float("inf")
         )
 
         self.assertEqual(value, 30)
@@ -126,7 +132,9 @@ class MinimaxTests(unittest.TestCase):
             board,
             depth=1,
             maximizing=False,
-            ai_color=Color.WHITE
+            ai_color=Color.WHITE,
+            alfa=float("-inf"),
+            beta=float("inf")
         )
 
         self.assertEqual(value, 10)
@@ -155,6 +163,48 @@ class MinimaxTests(unittest.TestCase):
         )
 
         self.assertEqual(best_move, move_2)
+
+    @patch("src.ai.minimax.evaluate_board")
+    def test_maximizing_prunes_when_alpha_reaches_beta(self, mock_evaluate):
+        board = MagicMock()
+        board.generate_successors.return_value = [
+            (None, MagicMock()),
+            (None, MagicMock()),
+        ]
+        mock_evaluate.return_value = 25
+
+        value = minimax(
+            board,
+            depth=1,
+            maximizing=True,
+            ai_color=Color.WHITE,
+            alfa=10,
+            beta=20
+        )
+
+        self.assertEqual(value, 25)
+        mock_evaluate.assert_called_once()
+
+    @patch("src.ai.minimax.evaluate_board")
+    def test_minimizing_prunes_when_beta_reaches_alpha(self, mock_evaluate):
+        board = MagicMock()
+        board.generate_successors.return_value = [
+            (None, MagicMock()),
+            (None, MagicMock()),
+        ]
+        mock_evaluate.return_value = 5
+
+        value = minimax(
+            board,
+            depth=1,
+            maximizing=False,
+            ai_color=Color.WHITE,
+            alfa=10,
+            beta=20
+        )
+
+        self.assertEqual(value, 5)
+        mock_evaluate.assert_called_once()
 
     def test_choose_minimax_move_returns_none_without_moves(self):
         # Se nao houver jogadas legais, nenhuma jogada deve ser retornada.
@@ -202,7 +252,32 @@ class MinimaxTests(unittest.TestCase):
             new_board,
             2,
             False,
-            Color.WHITE
+            Color.WHITE,
+            float("-inf"),
+            float("inf")
+        )
+
+    @patch("src.ai.minimax.minimax")
+    def test_choose_move_carries_alpha_to_next_root_branch(self, mock_minimax):
+        board = MagicMock()
+        move_1 = Move((6, 0), (5, 0))
+        move_2 = Move((6, 1), (5, 1))
+        board_1 = MagicMock()
+        board_2 = MagicMock()
+        board.generate_successors.return_value = [
+            (move_1, board_1),
+            (move_2, board_2),
+        ]
+        mock_minimax.side_effect = [10, 20]
+
+        choose_minimax_move(board, Color.WHITE, depth=2)
+
+        self.assertEqual(
+            mock_minimax.call_args_list,
+            [
+                call(board_1, 1, False, Color.WHITE, float("-inf"), float("inf")),
+                call(board_2, 1, False, Color.WHITE, 10, float("inf")),
+            ]
         )
 
 
