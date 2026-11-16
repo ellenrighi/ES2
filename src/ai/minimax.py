@@ -13,7 +13,7 @@ def validate_depth(depth: int) -> None:
         raise ValueError("A profundidade deve ser maior ou igual a 1.")
 
 
-def minimax(board, depth: int, maximizing: bool, ai_color: Color) -> int:
+def minimax(board, depth: int, maximizing: bool, ai_color: Color, alfa: float, beta: float) -> int:
     # Quando chega na profundidade definida, avalia o tabuleiro.
     if depth == 0:
         return evaluate_board(board, ai_color)
@@ -36,10 +36,15 @@ def minimax(board, depth: int, maximizing: bool, ai_color: Color) -> int:
                 new_board,
                 depth - 1,
                 False,
-                ai_color
+                ai_color,
+                alfa,
+                beta
             )
-
             best_value = max(best_value, value)
+            alfa = max(alfa, best_value)
+
+            if alfa >= beta:
+                break
 
         return best_value
 
@@ -50,10 +55,14 @@ def minimax(board, depth: int, maximizing: bool, ai_color: Color) -> int:
             new_board,
             depth - 1,
             True,
-            ai_color
+            ai_color,
+            alfa,
+            beta
         )
-
         best_value = min(best_value, value)
+        beta = min(beta, best_value)
+        if alfa >= beta:
+            break
 
     return best_value
 
@@ -76,7 +85,9 @@ def choose_minimax_move(board, ai_color: Color, depth: int):
             new_board,
             depth - 1,
             False,
-            ai_color
+            ai_color,
+            float("-inf"),
+            float("inf")
         )
 
         if value > best_value:
