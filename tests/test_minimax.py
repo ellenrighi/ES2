@@ -1,5 +1,5 @@
 import unittest
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock, call, patch
 
 from src.ai.minimax import (
     minimax,
@@ -11,6 +11,7 @@ from src.ai.board_evaluation import evaluate_board, CHECKMATE_SCORE
 from src.domain.board import Board
 from src.domain.color import Color
 from src.domain.move import Move
+from src.domain.piece import Pawn, Queen, Rook
 
 
 class MinimaxTests(unittest.TestCase):
@@ -23,7 +24,9 @@ class MinimaxTests(unittest.TestCase):
             board,
             depth=0,
             maximizing=True,
-            ai_color=Color.WHITE
+            ai_color=Color.WHITE,
+            alfa=float("-inf"),
+            beta=float("inf")
         )
 
         self.assertEqual(value, evaluate_board(board, Color.WHITE))
@@ -36,7 +39,9 @@ class MinimaxTests(unittest.TestCase):
             board,
             depth=2,
             maximizing=True,
-            ai_color=Color.WHITE
+            ai_color=Color.WHITE,
+            alfa=float("-inf"),
+            beta=float("inf")
         )
 
         self.assertIsInstance(value, (int, float))
@@ -48,6 +53,48 @@ class MinimaxTests(unittest.TestCase):
         successors = expand_node(board, Color.WHITE)
 
         self.assertGreater(len(successors), 0)
+
+    def test_expand_node_orders_captures_by_mvv_lva(self):
+        board = MagicMock()
+        pieces = {
+            (4, 0): Pawn(Color.WHITE),
+            (3, 1): Queen(Color.BLACK),
+            (4, 2): Rook(Color.WHITE),
+            (3, 3): Queen(Color.BLACK),
+            (4, 4): Pawn(Color.WHITE),
+            (3, 5): Pawn(Color.BLACK),
+            (3, 6): Pawn(Color.WHITE),
+            (3, 7): Pawn(Color.BLACK),
+            (6, 0): Pawn(Color.WHITE),
+        }
+        board.get_piece.side_effect = lambda row, col: pieces.get((row, col))
+
+        en_passant = Move((3, 6), (2, 7), is_en_passant=True)
+        pawn_takes_queen = Move((4, 0), (3, 1))
+        pawn_takes_pawn = Move((4, 4), (3, 5))
+        rook_takes_queen = Move((4, 2), (3, 3))
+        quiet_move = Move((6, 0), (5, 0))
+        successors = [
+            (quiet_move, MagicMock()),
+            (en_passant, MagicMock()),
+            (pawn_takes_queen, MagicMock()),
+            (pawn_takes_pawn, MagicMock()),
+            (rook_takes_queen, MagicMock()),
+        ]
+        board.generate_successors.return_value = successors
+
+        ordered = expand_node(board, Color.WHITE)
+
+        self.assertEqual(
+            [move for move, _ in ordered],
+            [
+                pawn_takes_queen,
+                rook_takes_queen,
+                en_passant,
+                pawn_takes_pawn,
+                quiet_move,
+            ],
+        )
 
     def test_initial_board_has_neutral_evaluation(self):
         # No inicio os dois lados possuem a mesma situacao.
@@ -89,9 +136,9 @@ class MinimaxTests(unittest.TestCase):
         board_3 = MagicMock()
 
         board.generate_successors.return_value = [
-            (None, board_1),
-            (None, board_2),
-            (None, board_3),
+            (Move((0, 0), (0, 1)), board_1),
+            (Move((0, 0), (0, 2)), board_2),
+            (Move((0, 0), (0, 3)), board_3),
         ]
 
         mock_evaluate.side_effect = [10, 30, 20]
@@ -100,7 +147,9 @@ class MinimaxTests(unittest.TestCase):
             board,
             depth=1,
             maximizing=True,
-            ai_color=Color.WHITE
+            ai_color=Color.WHITE,
+            alfa=float("-inf"),
+            beta=float("inf")
         )
 
         self.assertEqual(value, 30)
@@ -115,9 +164,9 @@ class MinimaxTests(unittest.TestCase):
         board_3 = MagicMock()
 
         board.generate_successors.return_value = [
-            (None, board_1),
-            (None, board_2),
-            (None, board_3),
+            (Move((0, 0), (0, 1)), board_1),
+            (Move((0, 0), (0, 2)), board_2),
+            (Move((0, 0), (0, 3)), board_3),
         ]
 
         mock_evaluate.side_effect = [10, 30, 20]
@@ -126,7 +175,9 @@ class MinimaxTests(unittest.TestCase):
             board,
             depth=1,
             maximizing=False,
-            ai_color=Color.WHITE
+            ai_color=Color.WHITE,
+            alfa=float("-inf"),
+            beta=float("inf")
         )
 
         self.assertEqual(value, 10)
@@ -155,6 +206,48 @@ class MinimaxTests(unittest.TestCase):
         )
 
         self.assertEqual(best_move, move_2)
+
+    @patch("src.ai.minimax.evaluate_board")
+    def test_maximizing_prunes_when_alpha_reaches_beta(self, mock_evaluate):
+        board = MagicMock()
+        board.generate_successors.return_value = [
+            (Move((0, 0), (0, 1)), MagicMock()),
+            (Move((0, 0), (0, 2)), MagicMock()),
+        ]
+        mock_evaluate.return_value = 25
+
+        value = minimax(
+            board,
+            depth=1,
+            maximizing=True,
+            ai_color=Color.WHITE,
+            alfa=10,
+            beta=20
+        )
+
+        self.assertEqual(value, 25)
+        mock_evaluate.assert_called_once()
+
+    @patch("src.ai.minimax.evaluate_board")
+    def test_minimizing_prunes_when_beta_reaches_alpha(self, mock_evaluate):
+        board = MagicMock()
+        board.generate_successors.return_value = [
+            (Move((0, 0), (0, 1)), MagicMock()),
+            (Move((0, 0), (0, 2)), MagicMock()),
+        ]
+        mock_evaluate.return_value = 5
+
+        value = minimax(
+            board,
+            depth=1,
+            maximizing=False,
+            ai_color=Color.WHITE,
+            alfa=10,
+            beta=20
+        )
+
+        self.assertEqual(value, 5)
+        mock_evaluate.assert_called_once()
 
     def test_choose_minimax_move_returns_none_without_moves(self):
         # Se nao houver jogadas legais, nenhuma jogada deve ser retornada.
@@ -202,7 +295,32 @@ class MinimaxTests(unittest.TestCase):
             new_board,
             2,
             False,
-            Color.WHITE
+            Color.WHITE,
+            float("-inf"),
+            float("inf")
+        )
+
+    @patch("src.ai.minimax.minimax")
+    def test_choose_move_carries_alpha_to_next_root_branch(self, mock_minimax):
+        board = MagicMock()
+        move_1 = Move((6, 0), (5, 0))
+        move_2 = Move((6, 1), (5, 1))
+        board_1 = MagicMock()
+        board_2 = MagicMock()
+        board.generate_successors.return_value = [
+            (move_1, board_1),
+            (move_2, board_2),
+        ]
+        mock_minimax.side_effect = [10, 20]
+
+        choose_minimax_move(board, Color.WHITE, depth=2)
+
+        self.assertEqual(
+            mock_minimax.call_args_list,
+            [
+                call(board_1, 1, False, Color.WHITE, float("-inf"), float("inf")),
+                call(board_2, 1, False, Color.WHITE, 10, float("inf")),
+            ]
         )
 
 

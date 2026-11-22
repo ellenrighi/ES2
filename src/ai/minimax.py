@@ -1,10 +1,37 @@
 from src.domain.color import Color
 from src.ai.board_evaluation import evaluate_board
+from src.ai.material_evaluation import PIECE_VALUES
 
 
 def expand_node(board, color: Color):
-    # Gera todos os estados possiveis a partir das jogadas legais.
-    return board.generate_successors(color)
+    # Gera e ordena capturas antes dos movimentos sem captura. Antecipa o momento de poda alfa-beta, priorizando movimentos que capturam peças mais valiosas.
+    successors = board.generate_successors(color)
+    return sorted(
+        successors,
+        key=lambda successor: _move_order_score(board, successor[0]),
+        reverse=True,
+    )
+
+
+def _move_order_score(board, move) -> int:
+    # Retorna uma pontuacao para o movimento, priorizando capturas de pecas mais valiosas.
+    attacker = board.get_piece(*move.start_pos)
+    if attacker is None:
+        return 0
+
+    if move.is_en_passant:
+        end_row, end_col = move.end_pos
+        capture_row = end_row + (1 if attacker.color is Color.WHITE else -1)
+        victim = board.get_piece(capture_row, end_col)
+    else:
+        victim = board.get_piece(*move.end_pos)
+
+    if victim is None:
+        return 0
+
+    attacker_value = PIECE_VALUES.get(type(attacker), 0)
+    victim_value = PIECE_VALUES.get(type(victim), 0)
+    return victim_value * 10 - attacker_value
 
 
 def validate_depth(depth: int) -> None:
@@ -13,7 +40,7 @@ def validate_depth(depth: int) -> None:
         raise ValueError("A profundidade deve ser maior ou igual a 1.")
 
 
-def minimax(board, depth: int, maximizing: bool, ai_color: Color) -> int:
+def minimax(board, depth: int, maximizing: bool, ai_color: Color, alfa: float, beta: float) -> int:
     # Quando chega na profundidade definida, avalia o tabuleiro.
     if depth == 0:
         return evaluate_board(board, ai_color)
@@ -36,10 +63,15 @@ def minimax(board, depth: int, maximizing: bool, ai_color: Color) -> int:
                 new_board,
                 depth - 1,
                 False,
-                ai_color
+                ai_color,
+                alfa,
+                beta
             )
-
             best_value = max(best_value, value)
+            alfa = max(alfa, best_value)
+
+            if alfa >= beta:
+                break
 
         return best_value
 
@@ -50,10 +82,14 @@ def minimax(board, depth: int, maximizing: bool, ai_color: Color) -> int:
             new_board,
             depth - 1,
             True,
-            ai_color
+            ai_color,
+            alfa,
+            beta
         )
-
         best_value = min(best_value, value)
+        beta = min(beta, best_value)
+        if alfa >= beta:
+            break
 
     return best_value
 
@@ -70,17 +106,22 @@ def choose_minimax_move(board, ai_color: Color, depth: int):
 
     best_move = None
     best_value = float("-inf")
+    alfa = float("-inf")
+    beta = float("inf")
 
     for move, new_board in successors:
         value = minimax(
             new_board,
             depth - 1,
             False,
-            ai_color
+            ai_color,
+            alfa,
+            beta
         )
 
         if value > best_value:
             best_value = value
             best_move = move
+        alfa = max(alfa, best_value)
 
     return best_move
