@@ -34,6 +34,7 @@ class Game:
         self.selected_square: tuple[int, int] | None = None
         self.legal_moves_by_dest: dict[tuple[int, int], Move] = {}
         self.pending_promotion_move: Move | None = None
+        self.game_over = False
         self.status_message = "Turno: Brancas"
 
     def get_piece(self, row: int, col: int) -> Piece | None:
@@ -56,6 +57,8 @@ class Game:
         Retorno:
             None.
         """
+        if self.game_over:
+            return
         if self.pending_promotion_move is not None:
             self.status_message = "Escolha promocao: Q, R, B ou N."
             return
@@ -122,6 +125,8 @@ class Game:
         self.legal_moves_by_dest = {m.end_pos: m for m in legal_moves}
         self.status_message = f"{self._piece_name(self.board.get_piece(row, col))} selecionada."
     def play_ai_turn(self) -> Move | None:
+        if self.game_over:
+            return None
         if self.current_turn is not Color.BLACK:
              return
 
@@ -149,7 +154,21 @@ class Game:
         self.selected_square = None
         self.legal_moves_by_dest = {}
         self.current_turn = self.current_turn.opposite()
-        self.status_message = self._turn_text()
+        self._evaluate_checkmate()
+
+    def _evaluate_checkmate(self) -> None:
+        """Detecta xeque-mate apos cada movimento e define o vencedor."""
+        if not self.board.is_checkmate(self.current_turn):
+            self.status_message = self._turn_text()
+            return
+
+        winner = self.current_turn.opposite()
+        self.game_over = True
+        self.status_message = (
+            "Pecas brancas venceram"
+            if winner is Color.WHITE
+            else "Pecas pretas venceram"
+        )
 
     def _turn_text(self) -> str:
         """Gera o texto de interface para o turno atual.
