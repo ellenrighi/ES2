@@ -232,6 +232,22 @@ class ChessRulesTests(unittest.TestCase):
         # 2. O Rei Negro não está em xeque-mate
         self.assertFalse(board.is_checkmate(Color.BLACK))
 
+    def test_game_checkmate_displays_winner_and_stops_moves(self):
+        game = Game()
+        game.board.grid = [[None for _ in range(8)] for _ in range(8)]
+        game.board.set_piece(7, 7, King(Color.WHITE))
+        game.board.set_piece(5, 7, King(Color.BLACK))
+        game.board.set_piece(6, 7, Queen(Color.BLACK))
+        game.current_turn = Color.WHITE
+
+        game._evaluate_checkmate()
+
+        self.assertTrue(game.game_over)
+        self.assertEqual(game.status_message, "Pecas pretas venceram")
+        before = repr(game.board.grid)
+        game.handle_click(7, 7)
+        self.assertEqual(repr(game.board.grid), before)
+
     def test_stalemate_detection(self):
         board = Board()
         board.grid = [[None for _ in range(8)] for _ in range(8)]
