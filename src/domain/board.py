@@ -24,9 +24,11 @@ class Board:
         """
         self.grid: list[list[Piece | None]] = [[None for _ in range(8)] for _ in range(8)]
         self.en_passant_target: tuple[int, int] | None = None
+        self.side_to_move = Color.WHITE
+        self.position_counts: dict[str, int] = {}
         # Guarda os estados anteriores do tabuleiro para permitir desfazer jogadas.
         self._history: list[
-            tuple[list[list[Piece | None]], tuple[int, int] | None]
+            tuple[list[list[Piece | None]], tuple[int, int] | None, Color, dict[str, int]]
         ] = []
         self.setup_initial_position()
 
@@ -38,6 +40,8 @@ class Board:
             for row in self.grid
         ]
         cloned.en_passant_target = self.en_passant_target
+        cloned.side_to_move = self.side_to_move
+        cloned.position_counts = dict(self.position_counts)
         return cloned
 
     def find_king(self, color: Color) -> tuple[int, int] | None:
@@ -76,6 +80,33 @@ class Board:
     def is_stalemate(self, color: Color) -> bool:
         """Verifica se o jogador de uma determinada cor esta afogado (empate por falta de lances)."""
         return not self.is_in_check(color) and not self.has_legal_moves(color)
+
+    def position_key(self) -> str:
+        """Cria uma chave da posicao, incluindo turno e direitos relevantes."""
+        pieces = []
+        for row in range(8):
+            for col in range(8):
+                piece = self.get_piece(row, col)
+                if piece is not None:
+                    name = type(piece).__name__[0]
+                    side = "w" if piece.color is Color.WHITE else "b"
+                    pieces.append(f"{row}{col}{name}{side}")
+
+        turn = "w" if self.side_to_move is Color.WHITE else "b"
+        en_passant = "-" if self.en_passant_target is None else (
+            f"e{self.en_passant_target[0]}{self.en_passant_target[1]}"
+        )
+
+        return f"{turn}|{' '.join(pieces)}|{en_passant}"
+
+    def record_position(self) -> None:
+        """Registra a posicao atual no historico de repeticoes."""
+        key = self.position_key()
+        self.position_counts[key] = self.position_counts.get(key, 0) + 1
+
+    def is_threefold_repetition(self) -> bool:
+        """Verifica se a posicao atual ocorreu pelo menos tres vezes."""
+        return self.position_counts.get(self.position_key(), 0) >= 3
 
     def would_leave_king_in_check(self, move: Move) -> bool:
         """Verifica se uma jogada deixaria o próprio rei em xeque."""
@@ -145,6 +176,8 @@ class Board:
         self.grid[0][4] = King(Color.BLACK)
         self.grid[7][4] = King(Color.WHITE)
         self.en_passant_target = None
+        self.side_to_move = Color.WHITE
+        self.position_counts = {self.position_key(): 1}
 
     @staticmethod
     def in_bounds(row: int, col: int) -> bool:
@@ -284,16 +317,23 @@ class Board:
             [piece.copy() if piece is not None else None for piece in row]
             for row in self.grid
         ]
-        self._history.append((grid_copy, self.en_passant_target))
+        self._history.append((
+            grid_copy,
+            self.en_passant_target,
+            self.side_to_move,
+            dict(self.position_counts),
+        ))
 
     def undo_move(self) -> None:
         """Volta o tabuleiro para o estado anterior."""
         if not self._history:
             raise ValueError("Nao existe movimento para desfazer.")
 
-        previous_grid, previous_en_passant_target = self._history.pop()
+        previous_grid, previous_en_passant_target, previous_side, previous_counts = self._history.pop()
         self.grid = previous_grid
         self.en_passant_target = previous_en_passant_target
+        self.side_to_move = previous_side
+        self.position_counts = previous_counts
 
     def execute_move(self, move: Move) -> None:
         """Executa um movimento no tabuleiro, incluindo regras especiais.
@@ -346,6 +386,8 @@ class Board:
             self.set_piece(er, ec, promoted)
 
         piece.has_moved = True
+        self.side_to_move = self.side_to_move.opposite()
+        self.record_position()
 
     @staticmethod
     def _promote_piece(color: Color, code: str | None) -> Piece:
