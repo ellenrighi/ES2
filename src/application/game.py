@@ -157,18 +157,23 @@ class Game:
         self._evaluate_checkmate()
 
     def _evaluate_checkmate(self) -> None:
-        """Detecta xeque-mate apos cada movimento e define o vencedor."""
-        if not self.board.is_checkmate(self.current_turn):
-            self.status_message = self._turn_text()
+        """Detecta xeque-mate e empate por repeticao apos cada movimento."""
+        if self.board.is_checkmate(self.current_turn):
+            winner = self.current_turn.opposite()
+            self.game_over = True
+            self.status_message = (
+                "Pecas brancas venceram"
+                if winner is Color.WHITE
+                else "Pecas pretas venceram"
+            )
             return
 
-        winner = self.current_turn.opposite()
-        self.game_over = True
-        self.status_message = (
-            "Pecas brancas venceram"
-            if winner is Color.WHITE
-            else "Pecas pretas venceram"
-        )
+        if self.board.is_threefold_repetition():
+            self.game_over = True
+            self.status_message = "Empate por repeticao tripla"
+            return
+
+        self.status_message = self._turn_text()
 
     def _turn_text(self) -> str:
         """Gera o texto de interface para o turno atual.
