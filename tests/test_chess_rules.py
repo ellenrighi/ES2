@@ -265,6 +265,33 @@ class ChessRulesTests(unittest.TestCase):
         # 3. Não deve ser considerado Xeque-Mate
         self.assertFalse(board.is_checkmate(Color.WHITE))
 
+    def test_threefold_repetition_detection(self):
+        board = Board()
+        knight_cycle = [
+            Move(start_pos=(7, 6), end_pos=(5, 5)),
+            Move(start_pos=(0, 6), end_pos=(2, 5)),
+            Move(start_pos=(5, 5), end_pos=(7, 6)),
+            Move(start_pos=(2, 5), end_pos=(0, 6)),
+        ]
+
+        for _ in range(2):
+            for move in knight_cycle:
+                board.execute_move(move)
+
+        self.assertTrue(board.is_threefold_repetition())
+
+    def test_game_repetition_displays_draw_and_stops_moves(self):
+        game = Game()
+        game.board.position_counts = {game.board.position_key(): 3}
+
+        game._evaluate_checkmate()
+
+        self.assertTrue(game.game_over)
+        self.assertEqual(game.status_message, "Empate por repeticao tripla")
+        before = repr(game.board.grid)
+        game.handle_click(6, 4)
+        self.assertEqual(repr(game.board.grid), before)
+
     def test_insufficient_material_detection(self):
         # Valida o empate por material insuficiente.
         self.skipTest("Pendente: empate por material insuficiente.")
@@ -272,10 +299,6 @@ class ChessRulesTests(unittest.TestCase):
     def test_fifty_move_rule_detection(self):
         # Valida o empate pela regra dos 50 lances.
         self.skipTest("Pendente: regra dos 50 lances.")
-
-    def test_threefold_repetition_detection(self):
-        # Valida o empate por repeticao tripla da posicao.
-        self.skipTest("Pendente: repeticao tripla de posicao.")
 
     def test_selection_rejects_opponent_piece_out_of_turn(self):
         # Garante que o jogador nao selecione peca da cor adversaria.
