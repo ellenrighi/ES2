@@ -1,6 +1,15 @@
+import time
+
 from src.domain.color import Color
 from src.ai.board_evaluation import evaluate_board
 from src.ai.material_evaluation import PIECE_VALUES
+
+
+SEARCH_TIME_LIMIT_SECONDS = 10.0
+
+
+class SearchTimeout(Exception):
+    pass
 
 
 def expand_node(board, color: Color):
@@ -40,7 +49,18 @@ def validate_depth(depth: int) -> None:
         raise ValueError("A profundidade deve ser maior ou igual a 1.")
 
 
-def minimax(board, depth: int, maximizing: bool, ai_color: Color, alfa: float, beta: float) -> int:
+def minimax(
+    board,
+    depth: int,
+    maximizing: bool,
+    ai_color: Color,
+    alfa: float,
+    beta: float,
+    deadline: float | None = None,
+) -> int:
+    if deadline is not None and time.perf_counter() >= deadline:
+        raise SearchTimeout
+
     # Quando chega na profundidade definida, avalia o tabuleiro.
     if depth == 0:
         return evaluate_board(board, ai_color)
@@ -65,7 +85,8 @@ def minimax(board, depth: int, maximizing: bool, ai_color: Color, alfa: float, b
                 False,
                 ai_color,
                 alfa,
-                beta
+                beta,
+                deadline,
             )
             best_value = max(best_value, value)
             alfa = max(alfa, best_value)
@@ -84,7 +105,8 @@ def minimax(board, depth: int, maximizing: bool, ai_color: Color, alfa: float, b
             True,
             ai_color,
             alfa,
-            beta
+            beta,
+            deadline,
         )
         best_value = min(best_value, value)
         beta = min(beta, best_value)
@@ -94,34 +116,70 @@ def minimax(board, depth: int, maximizing: bool, ai_color: Color, alfa: float, b
     return best_value
 
 
-def choose_minimax_move(board, ai_color: Color, depth: int):
-    # Confere se a profundidade informada pode ser usada na busca.
-    validate_depth(depth)
-
-    # Procura a melhor jogada disponivel para a IA.
+def _choose_move_at_depth(
+    board,
+    ai_color: Color,
+    depth: int,
+    deadline: float,
+):
     successors = expand_node(board, ai_color)
-
     if not successors:
         return None
 
-    best_move = None
+    best_move = successors[0][0]
     best_value = float("-inf")
     alfa = float("-inf")
     beta = float("inf")
 
     for move, new_board in successors:
+        if time.perf_counter() >= deadline:
+            raise SearchTimeout
+
         value = minimax(
             new_board,
             depth - 1,
             False,
             ai_color,
             alfa,
-            beta
+            beta,
+            deadline,
         )
 
         if value > best_value:
             best_value = value
             best_move = move
         alfa = max(alfa, best_value)
+
+    return best_move
+
+
+def choose_minimax_move(
+    board,
+    ai_color: Color,
+    depth: int,
+    time_limit_seconds: float = SEARCH_TIME_LIMIT_SECONDS,
+):
+    # Confere se a profundidade informada pode ser usada na busca.
+    validate_depth(depth)
+
+    successors = expand_node(board, ai_color)
+    if not successors:
+        return None
+
+    best_move = successors[0][0]
+    deadline = time.perf_counter() + time_limit_seconds
+
+    for current_depth in range(1, depth + 1):
+        try:
+            completed_move = _choose_move_at_depth(
+                board,
+                ai_color,
+                current_depth,
+                deadline,
+            )
+            if completed_move is not None:
+                best_move = completed_move
+        except SearchTimeout:
+            break
 
     return best_move
