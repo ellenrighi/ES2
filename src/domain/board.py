@@ -338,8 +338,18 @@ class Board:
 
                 for move in moves:
                     new_board = self.copy()
-                    new_board.execute_move(move)
-                    successors.append((move, new_board))
+                    successor_move = Move(
+                        start_pos=move.start_pos,
+                        end_pos=move.end_pos,
+                        is_castling=move.is_castling,
+                        is_en_passant=move.is_en_passant,
+                        requires_promotion=move.requires_promotion,
+                        promotion_piece=move.promotion_piece,
+                    )
+                    if successor_move.requires_promotion and successor_move.promotion_piece is None:
+                        successor_move.promotion_piece = "Q"
+                    new_board.execute_move(successor_move)
+                    successors.append((successor_move, new_board))
 
         return successors
 
