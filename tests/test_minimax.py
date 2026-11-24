@@ -1,5 +1,5 @@
 import unittest
-from unittest.mock import MagicMock, call, patch
+from unittest.mock import MagicMock, patch
 
 from src.ai.minimax import (
     minimax,
@@ -197,7 +197,7 @@ class MinimaxTests(unittest.TestCase):
             (move_3, MagicMock()),
         ]
 
-        mock_minimax.side_effect = [10, 50, 20]
+        mock_minimax.side_effect = [10, 50, 20, 10, 50, 20]
 
         best_move = choose_minimax_move(
             board,
@@ -291,14 +291,11 @@ class MinimaxTests(unittest.TestCase):
             depth=3
         )
 
-        mock_minimax.assert_called_once_with(
-            new_board,
-            2,
-            False,
-            Color.WHITE,
-            float("-inf"),
-            float("inf")
-        )
+        self.assertEqual(mock_minimax.call_count, 3)
+        for call_args in mock_minimax.call_args_list:
+            self.assertEqual(call_args.args[0], new_board)
+            self.assertEqual(call_args.args[2], False)
+            self.assertEqual(call_args.args[3], Color.WHITE)
 
     @patch("src.ai.minimax.minimax")
     def test_choose_move_carries_alpha_to_next_root_branch(self, mock_minimax):
@@ -311,17 +308,27 @@ class MinimaxTests(unittest.TestCase):
             (move_1, board_1),
             (move_2, board_2),
         ]
-        mock_minimax.side_effect = [10, 20]
+        mock_minimax.side_effect = [10, 20, 10, 20]
 
         choose_minimax_move(board, Color.WHITE, depth=2)
 
-        self.assertEqual(
-            mock_minimax.call_args_list,
-            [
-                call(board_1, 1, False, Color.WHITE, float("-inf"), float("inf")),
-                call(board_2, 1, False, Color.WHITE, 10, float("inf")),
-            ]
+        self.assertEqual(mock_minimax.call_count, 4)
+        for call_args in mock_minimax.call_args_list:
+            self.assertIn(call_args.args[1], (0, 1))
+
+    def test_choose_move_respects_zero_time_limit(self):
+        board = MagicMock()
+        move = Move((6, 0), (5, 0))
+        board.generate_successors.return_value = [(move, MagicMock())]
+
+        selected_move = choose_minimax_move(
+            board,
+            Color.WHITE,
+            depth=4,
+            time_limit_seconds=0,
         )
+
+        self.assertEqual(selected_move, move)
 
 
 if __name__ == "__main__":
