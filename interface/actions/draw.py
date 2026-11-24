@@ -1,5 +1,6 @@
 import pygame
 
+from interface.components.draw_board import draw_board
 from interface.components.exit_popup import draw_exit_popup
 from interface.components.promotion_popup import draw_promotion_popup
 from interface.components.draw_button import draw_button
@@ -12,10 +13,15 @@ from interface.screens.multiplayer import AI_BUTTONS, MULTIPLAYER_BUTTONS, draw_
 from interface.theme import BACKGROUND
 
 
-def draw(window, page, buttons, focused, rules_parent='home', game=None, animation=None):
+def draw(window, page, buttons, focused, rules_parent='home', game=None, animation=None,
+         victory_elapsed_ms=0):
     surface = window.screen
     surface.fill(BACKGROUND)
-    popup_open = page in ('rules', 'confirm_exit', 'victory')
+    if page == 'victory':
+        draw_board(surface, game)
+        draw_victory_popup(surface, game.winner, victory_elapsed_ms)
+        return
+    popup_open = page in ('rules', 'confirm_exit')
     background_page = rules_parent if popup_open else page
     if background_page == 'multiplayer':
         draw_multiplayer(surface, game)
@@ -28,9 +34,6 @@ def draw(window, page, buttons, focused, rules_parent='home', game=None, animati
         draw_modes(surface)
     else:
         draw_home(surface)
-    if page == 'victory':
-        draw_victory_popup(surface, game.winner)
-        return
     if popup_open:
         # A tela anterior continua visível, mas só o pop-up recebe interações.
         if background_page in AI_LEVELS:

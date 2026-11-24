@@ -29,6 +29,7 @@ def run():
                    **dict.fromkeys(AI_LEVELS, AI_BUTTONS)}
         clock = pygame.time.Clock()
         ai_elapsed_ms = 0
+        victory_elapsed_ms = 0
         animation = MoveAnimation()
         while True:
             delta_ms = clock.tick(60)
@@ -42,9 +43,13 @@ def run():
             game = games.get(background_page)
             ai_game = game if background_page in AI_LEVELS else None
             ai_elapsed_ms = update_ai(ai_game, page, ai_elapsed_ms, delta_ms, animation)
-            if page in games and game.winner is not None and not animation.active:
+            if page == 'victory':
+                victory_elapsed_ms += delta_ms
+            elif page in games and game.winner is not None and not animation.active:
                 rules_parent, page, focused = page, 'victory', None
-            draw(window, page, buttons[page], focused, rules_parent, game, animation)
+                victory_elapsed_ms = 0
+            draw(window, page, buttons[page], focused, rules_parent, game, animation,
+                 victory_elapsed_ms=victory_elapsed_ms)
             window.update()
     finally:
         pygame.quit()
