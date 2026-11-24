@@ -7,6 +7,7 @@ from interface.actions.draw import draw
 from interface.actions.update_ai import update_ai
 from interface.actions.handle_event import handle_event
 from interface.components.exit_popup import EXIT_BUTTONS
+from interface.components.result_popup import RESULT_BUTTONS
 from interface.components.rules_popup import RULES_BUTTONS
 from interface.screens.home import HOME_BUTTONS
 from interface.screens.modes import MODE_BUTTONS
@@ -25,7 +26,7 @@ def run():
         buttons = {'home': HOME_BUTTONS, 'modes': MODE_BUTTONS,
                    'multiplayer': MULTIPLAYER_BUTTONS, 'rules': RULES_BUTTONS,
                    'ai_levels': AI_LEVEL_BUTTONS, 'confirm_exit': EXIT_BUTTONS,
-                   'result': [],
+                   'result': RESULT_BUTTONS,
                    **dict.fromkeys(AI_LEVELS, AI_BUTTONS)}
         clock = pygame.time.Clock()
         ai_elapsed_ms = 0

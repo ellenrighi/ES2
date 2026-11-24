@@ -79,6 +79,9 @@ def handle_event(window, event, page, buttons, focused, rules_parent='home', gam
                 if rules_parent in AI_LEVELS and animation is not None:
                     animation.advance(animation.DURATION_MS)
                 return ('ai_levels' if rules_parent in AI_LEVELS else 'modes'), None
+            elif button.action in ('restart_game', 'return_to_menu'):
+                game.reset()
+                return ('home' if button.action == 'return_to_menu' else rules_parent), None
             elif button.action in ('close_rules', 'cancel_exit'):
                 return rules_parent, None
             elif button.action:

@@ -18,15 +18,14 @@ def draw(window, page, buttons, focused, rules_parent='home', game=None, animati
          result_elapsed_ms=0, result_reason=None):
     surface = window.screen
     surface.fill(BACKGROUND)
+    popup_open = page in ('rules', 'confirm_exit')
+    background_page = rules_parent if popup_open else page
     if page == 'result':
         draw_board(surface, game)
         defeat = rules_parent in AI_LEVELS and game.winner is Color.BLACK
         draw_result_popup(surface, game.winner, result_elapsed_ms, reason=result_reason,
                           defeat=defeat)
-        return
-    popup_open = page in ('rules', 'confirm_exit')
-    background_page = rules_parent if popup_open else page
-    if background_page == 'multiplayer':
+    elif background_page == 'multiplayer':
         draw_multiplayer(surface, game)
     elif background_page in AI_LEVELS:
         _, label = AI_LEVELS[background_page]

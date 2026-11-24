@@ -12,6 +12,7 @@ from interface.actions.draw import draw
 from interface.actions.update_ai import update_ai
 from interface.components.move_animation import MoveAnimation
 from interface.components.exit_popup import EXIT_BUTTONS
+from interface.components.result_popup import RESULT_BUTTONS
 from interface.components.draw_board import draw_board
 from src.domain.move import Move
 from interface.actions.handle_event import handle_event
@@ -267,3 +268,32 @@ class InterfaceGameTests(unittest.TestCase):
             self.assertIsInstance(self.game.get_piece(6, 4), Pawn)
             if mode != 'multiplayer':
                 self.assertFalse(animation.active)
+
+    def test_result_buttons_restart_same_mode_or_return_home(self):
+        tab = pygame.event.Event(pygame.KEYDOWN, key=pygame.K_TAB, mod=0)
+        enter = pygame.event.Event(pygame.KEYDOWN, key=pygame.K_RETURN)
+        for mode, difficulty in [('multiplayer', Difficulty.EASY), ('ai_medium', Difficulty.MEDIUM)]:
+            for button, destination in zip(RESULT_BUTTONS, (mode, 'home')):
+                with self.subTest(mode=mode, action=button.action):
+                    game = Game(difficulty)
+                    game.handle_click(6, 4)
+                    game.handle_click(4, 4)
+                    game.game_over = True
+                    game.winner = Color.BLACK
+                    draw(self.window, 'result', RESULT_BUTTONS, None, mode, game,
+                         result_elapsed_ms=1600, result_reason='Xeque-mate')
+
+                    if destination == mode:
+                        _, focused = handle_event(self.window, tab, 'result', RESULT_BUTTONS, None, mode, game)
+                        event = enter
+                    else:
+                        focused = None
+                        position = tuple(value * 2 for value in button.rect.center)
+                        event = pygame.event.Event(pygame.MOUSEBUTTONDOWN, button=1, pos=position)
+                    self.assertEqual(handle_event(self.window, event, 'result', RESULT_BUTTONS,
+                                                  focused, mode, game), (destination, None))
+                    self.assertFalse(game.game_over)
+                    self.assertIsNone(game.winner)
+                    self.assertEqual(game.move_count, 0)
+                    self.assertEqual(game.current_turn, Color.WHITE)
+                    self.assertEqual(game.difficulty, difficulty)

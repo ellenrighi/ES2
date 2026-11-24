@@ -1,9 +1,15 @@
 import pygame
 
+from interface.components.button import Button
 from interface.drawing.font import font
 from interface.drawing.load_icon import load_icon
 from interface.theme import ACCENT, TEXT
 from src.domain.color import Color
+
+RESULT_BUTTONS = [
+    Button(pygame.Rect(288, 376, 224, 48), 'Nova partida', 'restart_game', primary=True),
+    Button(pygame.Rect(288, 434, 224, 48), 'Voltar ao menu', 'return_to_menu'),
+]
 
 
 def draw_result_popup(surface, winner, elapsed_ms, reason=None, defeat=False):

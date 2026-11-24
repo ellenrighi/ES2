@@ -46,6 +46,8 @@ O tabuleiro usa o estado da partida e as regras do backend, incluindo capturas, 
 
 Cada dificuldade tem sua própria partida, independente do Multiplayer. Confirmar a saída reinicia apenas a partida atual. Na partida contra IA, a seta ou Esc retorna ao menu de dificuldade; dali, retorna à seleção de modo. A tela de resultado mostra quem venceu por xeque-mate ou informa que a partida terminou empatada. No Vs IA, se a IA vencer, aparece a tela de derrota.
 
+Na tela de resultado, **Nova partida** reinicia o jogo no mesmo modo e na mesma dificuldade. **Voltar ao menu** leva à tela inicial.
+
 ## Organização dos arquivos
 
 ```text
