@@ -450,6 +450,7 @@ class ChessRulesTests(unittest.TestCase):
         game._evaluate_checkmate()
 
         self.assertTrue(game.game_over)
+        self.assertIs(game.winner, Color.BLACK)
         self.assertEqual(game.status_message, "Pecas pretas venceram")
         before = repr(game.board.grid)
         game.handle_click(7, 7)
@@ -489,6 +490,7 @@ class ChessRulesTests(unittest.TestCase):
         game._evaluate_checkmate()
 
         self.assertTrue(game.game_over)
+        self.assertIsNone(game.winner)
         self.assertEqual(game.status_message, "Empate por repeticao tripla")
         before = repr(game.board.grid)
         game.handle_click(6, 4)
