@@ -157,7 +157,7 @@ class Game:
         self._evaluate_checkmate()
 
     def _evaluate_checkmate(self) -> None:
-        """Detecta xeque-mate e empate por repeticao apos cada movimento."""
+        """Detecta fim de jogo por xeque-mate ou empate (afogamento, repeticao, 50 lances, material)."""
         if self.board.is_checkmate(self.current_turn):
             winner = self.current_turn.opposite()
             self.game_over = True
@@ -168,9 +168,24 @@ class Game:
             )
             return
 
+        if self.board.is_stalemate(self.current_turn):
+            self.game_over = True
+            self.status_message = "Empate por afogamento"
+            return
+
         if self.board.is_threefold_repetition():
             self.game_over = True
             self.status_message = "Empate por repeticao tripla"
+            return
+
+        if self.board.is_fifty_move_rule():
+            self.game_over = True
+            self.status_message = "Empate pela regra dos 50 lances"
+            return
+
+        if self.board.is_insufficient_material():
+            self.game_over = True
+            self.status_message = "Empate por material insuficiente"
             return
 
         self.status_message = self._turn_text()

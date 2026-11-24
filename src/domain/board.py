@@ -26,9 +26,9 @@ class Board:
         self.en_passant_target: tuple[int, int] | None = None
         self.side_to_move = Color.WHITE
         self.position_counts: dict[str, int] = {}
-        # Guarda os estados anteriores do tabuleiro para permitir desfazer jogadas.
+        self.halfmove_clock: int = 0
         self._history: list[
-            tuple[list[list[Piece | None]], tuple[int, int] | None, Color, dict[str, int]]
+            tuple[list[list[Piece | None]], tuple[int, int] | None, Color, dict[str, int], int]
         ] = []
         self.setup_initial_position()
 
@@ -42,6 +42,7 @@ class Board:
         cloned.en_passant_target = self.en_passant_target
         cloned.side_to_move = self.side_to_move
         cloned.position_counts = dict(self.position_counts)
+        cloned.halfmove_clock = self.halfmove_clock
         return cloned
 
     def find_king(self, color: Color) -> tuple[int, int] | None:
@@ -69,7 +70,7 @@ class Board:
                 piece = self.get_piece(r, c)
                 if piece is not None and piece.color is color:
                     moves = self.generate_moves_for_piece(r, c)
-                    if moves:  # Encontrou pelo menos 1 movimento legal valido
+                    if moves:
                         return True
         return False
 
@@ -88,7 +89,7 @@ class Board:
             for col in range(8):
                 piece = self.get_piece(row, col)
                 if piece is not None:
-                    name = type(piece).__name__[0]
+                    name = piece.kind
                     side = "w" if piece.color is Color.WHITE else "b"
                     pieces.append(f"{row}{col}{name}{side}")
 
@@ -97,7 +98,26 @@ class Board:
             f"e{self.en_passant_target[0]}{self.en_passant_target[1]}"
         )
 
-        return f"{turn}|{' '.join(pieces)}|{en_passant}"
+        castling = []
+        wk = self.get_piece(7, 4)
+        if isinstance(wk, King) and wk.color is Color.WHITE and not wk.has_moved:
+            rk = self.get_piece(7, 7)
+            if isinstance(rk, Rook) and rk.color is Color.WHITE and not rk.has_moved:
+                castling.append("K")
+            rq = self.get_piece(7, 0)
+            if isinstance(rq, Rook) and rq.color is Color.WHITE and not rq.has_moved:
+                castling.append("Q")
+        bk = self.get_piece(0, 4)
+        if isinstance(bk, King) and bk.color is Color.BLACK and not bk.has_moved:
+            rk = self.get_piece(0, 7)
+            if isinstance(rk, Rook) and rk.color is Color.BLACK and not rk.has_moved:
+                castling.append("k")
+            rq = self.get_piece(0, 0)
+            if isinstance(rq, Rook) and rq.color is Color.BLACK and not rq.has_moved:
+                castling.append("q")
+        castling_str = "".join(castling) if castling else "-"
+
+        return f"{turn}|{' '.join(pieces)}|{en_passant}|{castling_str}"
 
     def record_position(self) -> None:
         """Registra a posicao atual no historico de repeticoes."""
@@ -107,6 +127,52 @@ class Board:
     def is_threefold_repetition(self) -> bool:
         """Verifica se a posicao atual ocorreu pelo menos tres vezes."""
         return self.position_counts.get(self.position_key(), 0) >= 3
+
+    def is_fifty_move_rule(self) -> bool:
+        """Verifica se a partida atingiu 50 lances sem capturas ou movimentos de peao (100 meios-lances)."""
+        return self.halfmove_clock >= 100
+
+    def is_insufficient_material(self) -> bool:
+        """Verifica se ha empate por impossibilidade material de dar xeque-mate.
+
+        Cenarios cobertos:
+            - Rei vs Rei
+            - Rei e Bispo vs Rei
+            - Rei e Cavalo vs Rei
+            - Rei e Bispo vs Rei e Bispo com bispos na mesma cor de casa
+        """
+        bishops: list[tuple[Color, int]] = []
+        knights: list[Color] = []
+
+        for row in range(8):
+            for col in range(8):
+                piece = self.get_piece(row, col)
+                if piece is None:
+                    continue
+                if isinstance(piece, (Pawn, Rook, Queen)):
+                    return False
+                if isinstance(piece, Bishop):
+                    bishops.append((piece.color, (row + col) % 2))
+                elif isinstance(piece, Knight):
+                    knights.append(piece.color)
+                elif not isinstance(piece, King):
+                    return False
+
+        if not bishops and not knights:
+            return True
+
+        if len(bishops) == 1 and not knights:
+            return True
+
+        if len(knights) == 1 and not bishops:
+            return True
+
+        if len(bishops) == 2 and not knights:
+            (c1, sq1), (c2, sq2) = bishops
+            if c1 is not c2 and sq1 == sq2:
+                return True
+
+        return False
 
     def would_leave_king_in_check(self, move: Move) -> bool:
         """Verifica se uma jogada deixaria o próprio rei em xeque."""
@@ -177,6 +243,7 @@ class Board:
         self.grid[7][4] = King(Color.WHITE)
         self.en_passant_target = None
         self.side_to_move = Color.WHITE
+        self.halfmove_clock = 0
         self.position_counts = {self.position_key(): 1}
 
     @staticmethod
@@ -270,7 +337,6 @@ class Board:
                 moves = self.generate_moves_for_piece(row, col)
 
                 for move in moves:
-                    # Cria uma copia para testar a jogada sem alterar o tabuleiro atual.
                     new_board = self.copy()
                     new_board.execute_move(move)
                     successors.append((move, new_board))
@@ -322,6 +388,7 @@ class Board:
             self.en_passant_target,
             self.side_to_move,
             dict(self.position_counts),
+            self.halfmove_clock,
         ))
 
     def undo_move(self) -> None:
@@ -329,11 +396,18 @@ class Board:
         if not self._history:
             raise ValueError("Nao existe movimento para desfazer.")
 
-        previous_grid, previous_en_passant_target, previous_side, previous_counts = self._history.pop()
+        (
+            previous_grid,
+            previous_en_passant_target,
+            previous_side,
+            previous_counts,
+            previous_halfmove,
+        ) = self._history.pop()
         self.grid = previous_grid
         self.en_passant_target = previous_en_passant_target
         self.side_to_move = previous_side
         self.position_counts = previous_counts
+        self.halfmove_clock = previous_halfmove
 
     def execute_move(self, move: Move) -> None:
         """Executa um movimento no tabuleiro, incluindo regras especiais.
@@ -352,8 +426,14 @@ class Board:
         if move.requires_promotion and move.promotion_piece is None:
             raise ValueError("Promocao obrigatoria sem escolha de peca.")
 
-        # Salva o estado antes da jogada para que ela possa ser desfeita depois.
         self._save_state()
+
+        is_capture = self.get_piece(er, ec) is not None or move.is_en_passant
+        if isinstance(piece, Pawn) or is_capture:
+            self.halfmove_clock = 0
+        else:
+            self.halfmove_clock += 1
+
         self.en_passant_target = None
 
         if move.is_en_passant:
