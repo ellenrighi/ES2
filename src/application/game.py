@@ -4,26 +4,28 @@ from src.domain.board import Board
 from src.domain.color import Color
 from src.domain.move import Move
 from src.domain.piece import Piece
-from src.ai.random_ai import choose_random_move
+from src.ai.difficulty import Difficulty
+from src.ai.strategy import choose_ai_move
 
 
 class Game:
     """Orquestra o fluxo da partida e estado da interacao do jogador.
 
     Parametros:
-        Nenhum.
+        difficulty (Difficulty): Nivel utilizado nas jogadas da IA.
     Retorno:
         Instancia de ``Game`` pronta para iniciar uma partida.
     """
 
-    def __init__(self) -> None:
+    def __init__(self, difficulty: Difficulty = Difficulty.EASY) -> None:
         """Inicializa tabuleiro, turno, selecao e mensagens de estado.
 
         Parametros:
-            Nenhum.
+            difficulty (Difficulty): Nivel utilizado nas jogadas da IA.
         Retorno:
             None.
         """
+        self.difficulty = difficulty
         self.reset()
 
     def reset(self) -> None:
@@ -124,17 +126,20 @@ class Game:
         legal_moves = self.board.generate_moves_for_piece(row, col)
         self.legal_moves_by_dest = {m.end_pos: m for m in legal_moves}
         self.status_message = f"{self._piece_name(self.board.get_piece(row, col))} selecionada."
+
+    @property
+    def can_play_ai(self) -> bool:
+        return (self.current_turn is Color.BLACK and not self.game_over
+                and self.pending_promotion_move is None)
+
     def play_ai_turn(self) -> Move | None:
-        if self.game_over:
+        if not self.can_play_ai:
             return None
-        if self.current_turn is not Color.BLACK:
-             return
 
-        move = choose_random_move(self.board, Color.BLACK)
-
+        move = choose_ai_move(self.board, Color.BLACK, self.difficulty)
         if move is None:
             self.status_message = "A IA não possui movimentos disponíveis."
-            return
+            return None
 
         if move.requires_promotion:
             move.promotion_piece = "Q"

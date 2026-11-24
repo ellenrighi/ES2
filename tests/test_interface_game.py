@@ -21,6 +21,8 @@ from interface.components.rules_popup import RULES_BUTTONS
 from interface.screens.multiplayer import AI_BUTTONS, MULTIPLAYER_BUTTONS
 from interface.screens.ai_levels import AI_LEVEL_BUTTONS
 from interface.screens.modes import MODE_BUTTONS
+from src.ai.difficulty import Difficulty
+from src.ai.strategy import choose_ai_move
 from src.application.game import Game
 from src.domain.color import Color
 from src.domain.piece import Pawn, Rook
@@ -48,6 +50,7 @@ class InterfaceGameTests(unittest.TestCase):
         event = pygame.event.Event(pygame.MOUSEBUTTONDOWN, button=1,
                                    pos=tuple(value * 2 for value in position))
         buttons = {'rules': RULES_BUTTONS, 'ai_easy': AI_BUTTONS,
+                   'ai_medium': AI_BUTTONS,
                    'ai_levels': AI_LEVEL_BUTTONS, 'modes': MODE_BUTTONS}.get(page, MULTIPLAYER_BUTTONS)
         return handle_event(self.window, event, page, buttons, None,
                             'multiplayer', self.game)
@@ -91,15 +94,38 @@ class InterfaceGameTests(unittest.TestCase):
         self.assertIsNone(self.game.pending_promotion_move)
         self.assertEqual(self.game.current_turn, Color.BLACK)
 
-    def test_ai_menu_and_disabled_levels(self):
+    def test_ai_menu_opens_each_level(self):
         self.assertEqual(self.click(MODE_BUTTONS[2].rect.center, 'modes')[0], 'ai_levels')
-        self.assertEqual(self.click(AI_LEVEL_BUTTONS[1].rect.center, 'ai_levels')[0], 'ai_easy')
-        for button in AI_LEVEL_BUTTONS[2:]:
-            self.assertEqual(self.click(button.rect.center, 'ai_levels')[0], 'ai_levels')
-        self.assertEqual(self.click(AI_BUTTONS[0].rect.center, 'ai_easy')[0], 'ai_levels')
-        for page, buttons in [('ai_levels', AI_LEVEL_BUTTONS), ('ai_easy', AI_BUTTONS)]:
-            draw(self.window, page, buttons, None, 'home', self.game)
-        draw(self.window, 'rules', RULES_BUTTONS, None, 'ai_easy', self.game)
+        self.assertEqual([button.action for button in AI_LEVEL_BUTTONS],
+                         ['modes', 'ai_easy', 'ai_medium'])
+        draw(self.window, 'ai_levels', AI_LEVEL_BUTTONS, None)
+        for button, page, title in zip(AI_LEVEL_BUTTONS[1:],
+                                       ('ai_easy', 'ai_medium'), ('Fácil', 'Médio')):
+            with self.subTest(page=page):
+                self.assertEqual(self.click(button.rect.center, 'ai_levels')[0], page)
+                self.assertEqual(self.click(AI_BUTTONS[0].rect.center, page)[0], 'ai_levels')
+                with patch('interface.actions.draw.draw_multiplayer') as draw_game:
+                    draw(self.window, 'rules', RULES_BUTTONS, None, page, self.game)
+                draw_game.assert_called_once_with(self.window.screen, self.game,
+                                                  f'Vs IA · {title}', None)
+
+    def test_medium_uses_backend_after_closing_rules(self):
+        page = 'ai_medium'
+        self.game = Game(Difficulty.MEDIUM)
+        self.square(6, 4, page)
+        self.square(4, 4, page)
+        self.square(1, 0, page)
+        self.assertIsNone(self.game.selected_square)
+        animation = MoveAnimation()
+        with patch('src.application.game.choose_ai_move', wraps=choose_ai_move) as reply:
+            elapsed = update_ai(self.game, page, 0, 799, animation)
+            elapsed = update_ai(self.game, 'rules', elapsed, 2000, animation)
+            reply.assert_not_called()
+            self.assertEqual(update_ai(self.game, page, elapsed, 1, animation), 0)
+            reply.assert_called_once_with(self.game.board, Color.BLACK, Difficulty.MEDIUM)
+        self.assertEqual(self.game.current_turn, Color.WHITE)
+        self.assertEqual(self.game.move_count, 2)
+        self.assertTrue(animation.active)
 
     def test_ai_responds_only_after_valid_move(self):
         with patch.object(self.game, 'play_ai_turn', wraps=self.game.play_ai_turn):
@@ -193,7 +219,8 @@ class InterfaceGameTests(unittest.TestCase):
 
     def test_exit_confirmation_cancel_and_reset_in_both_modes(self):
         for mode, buttons, destination in [('multiplayer', MULTIPLAYER_BUTTONS, 'modes'),
-                                            ('ai_easy', AI_BUTTONS, 'ai_levels')]:
+                                            ('ai_easy', AI_BUTTONS, 'ai_levels'),
+                                            ('ai_medium', AI_BUTTONS, 'ai_levels')]:
             self.game = Game()
             escape = pygame.event.Event(pygame.KEYDOWN, key=pygame.K_ESCAPE)
             self.assertEqual(handle_event(self.window, escape, mode, buttons, None,
@@ -218,5 +245,5 @@ class InterfaceGameTests(unittest.TestCase):
             self.assertEqual(self.game.move_count, 0)
             self.assertIsNone(self.game.get_piece(4, 4))
             self.assertIsInstance(self.game.get_piece(6, 4), Pawn)
-            if mode == 'ai_easy':
+            if mode != 'multiplayer':
                 self.assertFalse(animation.active)

@@ -2,12 +2,17 @@ import pygame
 
 from interface.components.button import Button
 from interface.drawing.centered_text import centered_text
+from src.ai.difficulty import Difficulty
+
+AI_LEVELS = {
+    'ai_easy': (Difficulty.EASY, 'Fácil'),
+    'ai_medium': (Difficulty.MEDIUM, 'Médio'),
+}
 
 AI_LEVEL_BUTTONS = [
     Button(pygame.Rect(48, 40, 48, 48), 'Voltar', 'modes', icon='arrow-left.png'),
-    Button(pygame.Rect(250, 230, 300, 52), 'Fácil', 'ai_easy'),
-    Button(pygame.Rect(250, 298, 300, 52), 'Médio', enabled=False),
-    Button(pygame.Rect(250, 366, 300, 52), 'Difícil', enabled=False),
+    *(Button(pygame.Rect(250, 230 + index * 68, 300, 52), label, page)
+      for index, (page, (_, label)) in enumerate(AI_LEVELS.items())),
 ]
 
 

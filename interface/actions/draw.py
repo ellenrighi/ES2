@@ -6,7 +6,7 @@ from interface.components.draw_button import draw_button
 from interface.components.rules_popup import draw_rules_popup
 from interface.screens.home import HOME_BUTTONS, draw_home
 from interface.screens.modes import draw_modes
-from interface.screens.ai_levels import draw_ai_levels
+from interface.screens.ai_levels import AI_LEVELS, draw_ai_levels
 from interface.screens.multiplayer import AI_BUTTONS, MULTIPLAYER_BUTTONS, draw_multiplayer
 from interface.theme import BACKGROUND
 
@@ -17,8 +17,9 @@ def draw(window, page, buttons, focused, rules_parent='home', game=None, animati
     background_page = rules_parent if page in ('rules', 'confirm_exit') else page
     if background_page == 'multiplayer':
         draw_multiplayer(surface, game)
-    elif background_page == 'ai_easy':
-        draw_multiplayer(surface, game, 'Vs IA · Fácil', animation)
+    elif background_page in AI_LEVELS:
+        _, label = AI_LEVELS[background_page]
+        draw_multiplayer(surface, game, f'Vs IA · {label}', animation)
     elif background_page == 'ai_levels':
         draw_ai_levels(surface)
     elif background_page == 'modes':
@@ -27,8 +28,12 @@ def draw(window, page, buttons, focused, rules_parent='home', game=None, animati
         draw_home(surface)
     if page in ('rules', 'confirm_exit'):
         # A tela anterior continua visível, mas só o pop-up recebe interações.
-        background_buttons = {'multiplayer': MULTIPLAYER_BUTTONS,
-                              'ai_easy': AI_BUTTONS}.get(rules_parent, HOME_BUTTONS)
+        if background_page in AI_LEVELS:
+            background_buttons = AI_BUTTONS
+        elif background_page == 'multiplayer':
+            background_buttons = MULTIPLAYER_BUTTONS
+        else:
+            background_buttons = HOME_BUTTONS
         for button in background_buttons:
             draw_button(button, surface, (-1, -1), False)
         if page == 'rules':
@@ -39,5 +44,5 @@ def draw(window, page, buttons, focused, rules_parent='home', game=None, animati
     for i, button in enumerate(buttons):
         draw_button(button, surface, mouse, focused == i)
 
-    if page in ('multiplayer', 'ai_easy') and game.pending_promotion_move is not None:
+    if (page == 'multiplayer' or page in AI_LEVELS) and game.pending_promotion_move is not None:
         draw_promotion_popup(surface)
