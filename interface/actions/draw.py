@@ -4,6 +4,7 @@ from interface.components.exit_popup import draw_exit_popup
 from interface.components.promotion_popup import draw_promotion_popup
 from interface.components.draw_button import draw_button
 from interface.components.rules_popup import draw_rules_popup
+from interface.components.victory_popup import draw_victory_popup
 from interface.screens.home import HOME_BUTTONS, draw_home
 from interface.screens.modes import draw_modes
 from interface.screens.ai_levels import AI_LEVELS, draw_ai_levels
@@ -14,7 +15,8 @@ from interface.theme import BACKGROUND
 def draw(window, page, buttons, focused, rules_parent='home', game=None, animation=None):
     surface = window.screen
     surface.fill(BACKGROUND)
-    background_page = rules_parent if page in ('rules', 'confirm_exit') else page
+    popup_open = page in ('rules', 'confirm_exit', 'victory')
+    background_page = rules_parent if popup_open else page
     if background_page == 'multiplayer':
         draw_multiplayer(surface, game)
     elif background_page in AI_LEVELS:
@@ -26,7 +28,10 @@ def draw(window, page, buttons, focused, rules_parent='home', game=None, animati
         draw_modes(surface)
     else:
         draw_home(surface)
-    if page in ('rules', 'confirm_exit'):
+    if page == 'victory':
+        draw_victory_popup(surface, game.winner)
+        return
+    if popup_open:
         # A tela anterior continua visível, mas só o pop-up recebe interações.
         if background_page in AI_LEVELS:
             background_buttons = AI_BUTTONS

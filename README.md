@@ -44,7 +44,7 @@ O PPlay já está incluído no repositório.
 
 O tabuleiro usa o estado da partida e as regras do backend, incluindo capturas, roque, en passant e bloqueio de jogadas que exponham o próprio rei. Na promoção, escolha uma peça no pop-up ou use Q (dama), R (torre), B (bispo) ou N (cavalo). Abrir as regras preserva a partida. Ao voltar ao menu após uma jogada, uma confirmação permite continuar jogando ou sair e reiniciar. Reiniciar o aplicativo inicia outra partida.
 
-Cada dificuldade tem sua própria partida, independente do Multiplayer. Confirmar a saída reinicia apenas a partida atual. Na partida contra IA, a seta ou Esc retorna ao menu de dificuldade; dali, retorna à seleção de modo. Não há multiplayer online nem encerramento automático por xeque-mate ou empate.
+Cada dificuldade tem sua própria partida, independente do Multiplayer. Confirmar a saída reinicia apenas a partida atual. Na partida contra IA, a seta ou Esc retorna ao menu de dificuldade; dali, retorna à seleção de modo. Quando há xeque-mate, a tela de vitória informa quem venceu.
 
 ## Organização dos arquivos
 

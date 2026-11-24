@@ -38,6 +38,7 @@ class Game:
         self.legal_moves_by_dest: dict[tuple[int, int], Move] = {}
         self.pending_promotion_move: Move | None = None
         self.game_over = False
+        self.winner: Color | None = None
         self.status_message = "Turno: Brancas"
 
     def get_piece(self, row: int, col: int) -> Piece | None:
@@ -166,11 +167,11 @@ class Game:
     def _evaluate_checkmate(self) -> None:
         """Detecta xeque-mate e empate por repeticao apos cada movimento."""
         if self.board.is_checkmate(self.current_turn):
-            winner = self.current_turn.opposite()
+            self.winner = self.current_turn.opposite()
             self.game_over = True
             self.status_message = (
                 "Pecas brancas venceram"
-                if winner is Color.WHITE
+                if self.winner is Color.WHITE
                 else "Pecas pretas venceram"
             )
             return
