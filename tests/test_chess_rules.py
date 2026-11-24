@@ -101,6 +101,26 @@ class ChessRulesTests(unittest.TestCase):
         self.assertIsNone(new_board.get_piece(*move.start_pos))
         self.assertIsNotNone(new_board.get_piece(*move.end_pos))
 
+    def test_generate_successors_promotes_pawn_to_queen_by_default(self):
+        board = Board()
+        board.grid = [[None] * 8 for _ in range(8)]
+        board.set_piece(7, 7, King(Color.WHITE))
+        board.set_piece(0, 0, King(Color.BLACK))
+        board.set_piece(1, 4, Pawn(Color.WHITE))
+
+        successors = board.generate_successors(Color.WHITE)
+        promotions = [
+            (move, new_board)
+            for move, new_board in successors
+            if move.requires_promotion
+        ]
+
+        self.assertEqual(len(promotions), 1)
+        move, new_board = promotions[0]
+        self.assertEqual(move.promotion_piece, "Q")
+        promoted_piece = new_board.get_piece(*move.end_pos)
+        self.assertIsInstance(promoted_piece, Queen)
+
     def test_castling_kingside_available_when_path_clear(self):
         board = Board()
         board.set_piece(7, 5, None)
