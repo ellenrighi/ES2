@@ -27,8 +27,9 @@ def draw_multiplayer(surface, game, title='Multiplayer', animation=None):
     pygame.draw.rect(surface, PANEL, (32, 542, 736, 42), border_radius=12)
     turn = 'Brancas' if game.current_turn is Color.WHITE else 'Pretas'
     surface.blit(font(18, True).render(f'Turno: {turn}', True, TEXT), (48, 553))
-    if game.status_message != f'Turno: {turn}':
-        message = font(16).render(game.status_message, True, TEXT)
+    status = 'Empate' if game.game_over and game.winner is None else game.status_message
+    if status != f'Turno: {turn}':
+        message = font(16).render(status, True, TEXT)
         surface.blit(message, (240, 554))
 
     move = game.last_move

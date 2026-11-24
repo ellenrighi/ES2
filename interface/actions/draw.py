@@ -4,8 +4,8 @@ from interface.components.draw_board import draw_board
 from interface.components.exit_popup import draw_exit_popup
 from interface.components.promotion_popup import draw_promotion_popup
 from interface.components.draw_button import draw_button
+from interface.components.result_popup import draw_result_popup
 from interface.components.rules_popup import draw_rules_popup
-from interface.components.victory_popup import draw_victory_popup
 from interface.screens.home import HOME_BUTTONS, draw_home
 from interface.screens.modes import draw_modes
 from interface.screens.ai_levels import AI_LEVELS, draw_ai_levels
@@ -14,12 +14,12 @@ from interface.theme import BACKGROUND
 
 
 def draw(window, page, buttons, focused, rules_parent='home', game=None, animation=None,
-         victory_elapsed_ms=0, victory_reason=None):
+         result_elapsed_ms=0, result_reason=None):
     surface = window.screen
     surface.fill(BACKGROUND)
-    if page == 'victory':
+    if page == 'result':
         draw_board(surface, game)
-        draw_victory_popup(surface, game.winner, victory_elapsed_ms, reason=victory_reason)
+        draw_result_popup(surface, game.winner, result_elapsed_ms, reason=result_reason)
         return
     popup_open = page in ('rules', 'confirm_exit')
     background_page = rules_parent if popup_open else page

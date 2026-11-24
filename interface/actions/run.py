@@ -19,17 +19,18 @@ def run():
         window = Window(800, 600, 'Xadrez', pixel_art=False)
         page, focused = 'home', None
         rules_parent = 'home'
-        popups = ('rules', 'confirm_exit', 'victory')
+        popups = ('rules', 'confirm_exit', 'result')
         games = {'multiplayer': Game(),
                  **{page: Game(difficulty) for page, (difficulty, _) in AI_LEVELS.items()}}
         buttons = {'home': HOME_BUTTONS, 'modes': MODE_BUTTONS,
                    'multiplayer': MULTIPLAYER_BUTTONS, 'rules': RULES_BUTTONS,
                    'ai_levels': AI_LEVEL_BUTTONS, 'confirm_exit': EXIT_BUTTONS,
-                   'victory': [],
+                   'result': [],
                    **dict.fromkeys(AI_LEVELS, AI_BUTTONS)}
         clock = pygame.time.Clock()
         ai_elapsed_ms = 0
-        victory_elapsed_ms = 0
+        result_elapsed_ms = 0
+        result_reason = None
         animation = MoveAnimation()
         while True:
             delta_ms = clock.tick(60)
@@ -43,13 +44,14 @@ def run():
             game = games.get(background_page)
             ai_game = game if background_page in AI_LEVELS else None
             ai_elapsed_ms = update_ai(ai_game, page, ai_elapsed_ms, delta_ms, animation)
-            if page == 'victory':
-                victory_elapsed_ms += delta_ms
-            elif page in games and game.winner is not None and not animation.active:
-                rules_parent, page, focused = page, 'victory', None
-                victory_elapsed_ms = 0
+            if page == 'result':
+                result_elapsed_ms += delta_ms
+            elif page in games and game.game_over and not animation.active:
+                rules_parent, page, focused = page, 'result', None
+                result_elapsed_ms = 0
+                result_reason = 'Xeque-mate' if game.winner is not None else None
             draw(window, page, buttons[page], focused, rules_parent, game, animation,
-                 victory_elapsed_ms=victory_elapsed_ms, victory_reason='Xeque-mate')
+                 result_elapsed_ms=result_elapsed_ms, result_reason=result_reason)
             window.update()
     finally:
         pygame.quit()
