@@ -30,3 +30,15 @@ def draw_multiplayer(surface, game, title='Multiplayer', animation=None):
     if game.status_message != f'Turno: {turn}':
         message = font(16).render(game.status_message, True, TEXT)
         surface.blit(message, (240, 554))
+
+    move = game.last_move
+    if move is None:
+        return
+    if move.is_castling:
+        notice = 'Roque realizado'
+    elif move.is_en_passant:
+        notice = 'Captura en passant'
+    else:
+        return
+    message = font(16, True).render(notice, True, TEXT)
+    surface.blit(message, message.get_rect(midright=(752, 563)))

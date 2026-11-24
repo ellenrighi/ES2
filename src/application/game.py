@@ -31,6 +31,7 @@ class Game:
     def reset(self) -> None:
         """Inicia uma partida vazia de histórico, na posição inicial."""
         self.move_count = 0
+        self.last_move: Move | None = None
         self.board = Board()
         self.current_turn = Color.WHITE
         self.selected_square: tuple[int, int] | None = None
@@ -156,6 +157,7 @@ class Game:
         """
         self.board.execute_move(move)
         self.move_count += 1
+        self.last_move = move
         self.selected_square = None
         self.legal_moves_by_dest = {}
         self.current_turn = self.current_turn.opposite()
