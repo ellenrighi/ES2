@@ -6,15 +6,18 @@ from interface.theme import ACCENT, TEXT
 from src.domain.color import Color
 
 
-def draw_result_popup(surface, winner, elapsed_ms, reason=None):
+def draw_result_popup(surface, winner, elapsed_ms, reason=None, defeat=False):
     progress = min(elapsed_ms / 650, 1)
     entrance = 1 - (1 - progress) ** 3
     overlay = pygame.Surface(surface.get_size(), pygame.SRCALPHA)
-    overlay.fill((15, 75, 43, round(192 * entrance)))
+    tint = (117, 26, 37) if defeat else (15, 75, 43)
+    overlay.fill((*tint, round(192 * entrance)))
     surface.blit(overlay, (0, 0))
 
     center_x, center_y = surface.get_rect().center
-    if winner is None:
+    if defeat:
+        title_text = 'Derrota'
+    elif winner is None:
         title_text = 'Empate'
     else:
         title_text = 'Brancas venceram' if winner is Color.WHITE else 'Pretas venceram'
@@ -24,9 +27,13 @@ def draw_result_popup(surface, winner, elapsed_ms, reason=None):
     title_offset = 24 if reason else 0
     title_top = center_y - title_offset - title_height // 2
     if winner is not None:
-        trophy = load_icon('trophy.png').copy()
-        trophy.set_alpha(round(255 * entrance))
-        surface.blit(trophy, trophy.get_rect(midbottom=(center_x, title_top - 12)))
+        if defeat:
+            king = load_icon('pieces/white-king.png')
+            icon = pygame.transform.rotozoom(king, -72, 1.6)
+        else:
+            icon = load_icon('trophy.png').copy()
+        icon.set_alpha(round(255 * entrance))
+        surface.blit(icon, icon.get_rect(midbottom=(center_x, title_top - 12)))
 
     for index, character in enumerate(title_text):
         letter_elapsed_ms = elapsed_ms - 80 - index * 36
@@ -42,6 +49,7 @@ def draw_result_popup(surface, winner, elapsed_ms, reason=None):
 
     if reason and elapsed_ms >= 1050:
         reveal = min((elapsed_ms - 1050) / 450, 1)
-        subtitle = font(24, True).render(reason, True, ACCENT)
+        subtitle_color = '#F4B4B8' if defeat else ACCENT
+        subtitle = font(24, True).render(reason, True, subtitle_color)
         subtitle.set_alpha(round(255 * reveal))
         surface.blit(subtitle, subtitle.get_rect(center=(center_x, center_y + 33)))

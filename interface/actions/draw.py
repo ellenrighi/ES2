@@ -11,6 +11,7 @@ from interface.screens.modes import draw_modes
 from interface.screens.ai_levels import AI_LEVELS, draw_ai_levels
 from interface.screens.multiplayer import AI_BUTTONS, MULTIPLAYER_BUTTONS, draw_multiplayer
 from interface.theme import BACKGROUND
+from src.domain.color import Color
 
 
 def draw(window, page, buttons, focused, rules_parent='home', game=None, animation=None,
@@ -19,7 +20,9 @@ def draw(window, page, buttons, focused, rules_parent='home', game=None, animati
     surface.fill(BACKGROUND)
     if page == 'result':
         draw_board(surface, game)
-        draw_result_popup(surface, game.winner, result_elapsed_ms, reason=result_reason)
+        defeat = rules_parent in AI_LEVELS and game.winner is Color.BLACK
+        draw_result_popup(surface, game.winner, result_elapsed_ms, reason=result_reason,
+                          defeat=defeat)
         return
     popup_open = page in ('rules', 'confirm_exit')
     background_page = rules_parent if popup_open else page
