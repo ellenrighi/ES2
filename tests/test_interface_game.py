@@ -22,6 +22,7 @@ from interface.components.rules_popup import RULES_BUTTONS
 from interface.screens.multiplayer import AI_BUTTONS, MULTIPLAYER_BUTTONS
 from interface.screens.ai_levels import AI_LEVEL_BUTTONS
 from interface.screens.modes import MODE_BUTTONS
+from interface.theme import ACCENT
 from src.ai.difficulty import Difficulty
 from src.ai.strategy import choose_ai_move
 from src.application.game import Game
@@ -68,6 +69,27 @@ class InterfaceGameTests(unittest.TestCase):
         self.assertEqual(self.game.current_turn, Color.BLACK)
         draw(self.window, 'multiplayer', MULTIPLAYER_BUTTONS, None,
              'home', self.game)
+
+    def test_ui_legal_squares_feedback(self):
+        for row, col in [(6, 4), (4, 4), (1, 3), (3, 3), (4, 4)]:
+            self.square(row, col)
+
+        advance = pygame.Rect(BOARD.x + 4 * SQUARE_SIZE, BOARD.y + 3 * SQUARE_SIZE,
+                              SQUARE_SIZE, SQUARE_SIZE)
+        capture = advance.move(-SQUARE_SIZE, 0)
+        illegal = advance.move(SQUARE_SIZE, 0)
+        capture_marker = capture.inflate(-4, -4).midleft
+        accent = pygame.Color(ACCENT)
+        surface = self.window.screen
+
+        draw_board(surface, self.game)
+        self.assertEqual(surface.get_at(advance.center), accent)
+        self.assertEqual(surface.get_at(capture_marker), accent)
+        self.assertNotEqual(surface.get_at(illegal.center), accent)
+
+        draw_board(surface, self.game, show_hints=False)
+        self.assertNotEqual(surface.get_at(advance.center), accent)
+        self.assertNotEqual(surface.get_at(capture_marker), accent)
 
     def test_invalid_move_and_rules_do_not_change_board(self):
         self.square(6, 4)
