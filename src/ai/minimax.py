@@ -5,7 +5,7 @@ from src.ai.board_evaluation import evaluate_board
 from src.ai.material_evaluation import PIECE_VALUES
 
 
-SEARCH_TIME_LIMIT_SECONDS = 10.0
+SEARCH_TIME_LIMIT_SECONDS = 5.0
 
 
 class SearchTimeout(Exception):
