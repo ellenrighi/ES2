@@ -14,12 +14,12 @@ from interface.theme import BACKGROUND
 
 
 def draw(window, page, buttons, focused, rules_parent='home', game=None, animation=None,
-         victory_elapsed_ms=0):
+         victory_elapsed_ms=0, victory_reason=None):
     surface = window.screen
     surface.fill(BACKGROUND)
     if page == 'victory':
         draw_board(surface, game)
-        draw_victory_popup(surface, game.winner, victory_elapsed_ms)
+        draw_victory_popup(surface, game.winner, victory_elapsed_ms, reason=victory_reason)
         return
     popup_open = page in ('rules', 'confirm_exit')
     background_page = rules_parent if popup_open else page

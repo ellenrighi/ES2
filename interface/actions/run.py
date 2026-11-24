@@ -49,7 +49,7 @@ def run():
                 rules_parent, page, focused = page, 'victory', None
                 victory_elapsed_ms = 0
             draw(window, page, buttons[page], focused, rules_parent, game, animation,
-                 victory_elapsed_ms=victory_elapsed_ms)
+                 victory_elapsed_ms=victory_elapsed_ms, victory_reason='Xeque-mate')
             window.update()
     finally:
         pygame.quit()
