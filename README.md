@@ -37,7 +37,7 @@ O PPlay já está incluído no repositório.
 - **Multiplayer** abre uma partida local para duas pessoas no mesmo computador. Clique em uma peça e depois no destino para mover ou capturar. O rodapé informa o turno e o resultado da ação.
 - **Regras**, na tela inicial, e o **ícone de livro**, no tabuleiro, abrem o resumo com fundo semitransparente. O **×** ou **Esc** fecha o pop-up e retorna à tela de origem.
 - O interruptor **Dicas**, no cabeçalho, mostra ou oculta os destinos permitidos para a peça selecionada.
-- **Vs IA** oferece os níveis **Fácil** e **Médio**. Você joga com as brancas e a IA joga com as pretas. No Fácil, a IA escolhe uma jogada legal aleatória. No Médio, ela usa Minimax com profundidade 2.
+- **Vs IA** oferece os níveis **Fácil**, **Médio** e **Difícil**. Você joga com as brancas e a IA joga com as pretas. No Fácil, a IA escolhe uma jogada legal aleatória. No Médio e no Difícil, ela usa Minimax com profundidade 2 e 4, respectivamente.
 - A **seta no canto superior esquerdo** ou **Esc** volta do tabuleiro à seleção de modo e da seleção à tela inicial.
 - Use o mouse ou **Tab / Shift+Tab** e **Enter / Espaço** para navegar pelos botões ativos.
 - Feche a janela para sair. A interface se adapta ao tamanho da janela mantendo as proporções.

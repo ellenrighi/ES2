@@ -7,6 +7,7 @@ from src.ai.difficulty import Difficulty
 AI_LEVELS = {
     'ai_easy': (Difficulty.EASY, 'Fácil'),
     'ai_medium': (Difficulty.MEDIUM, 'Médio'),
+    'ai_hard': (Difficulty.HARD, 'Difícil'),
 }
 
 AI_LEVEL_BUTTONS = [
