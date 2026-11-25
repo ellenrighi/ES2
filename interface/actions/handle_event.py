@@ -4,10 +4,13 @@ from src.domain.color import Color
 
 from interface.components.draw_board import BOARD, SQUARE_SIZE
 from interface.components.promotion_popup import PROMOTION_OPTIONS
+from interface.screens.ai_levels import AI_LEVELS
 
 
 def handle_event(window, event, page, buttons, focused, rules_parent='home', game=None, animation=None):
-    if page in ('multiplayer', 'ai_easy') and game is not None:
+    ai_page = page in AI_LEVELS
+    game_page = ai_page or page == 'multiplayer'
+    if game_page and game is not None:
         leaving = event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE
         if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
             position = window.screen_to_virtual_coords(*event.pos)
@@ -29,11 +32,11 @@ def handle_event(window, event, page, buttons, focused, rules_parent='home', gam
         if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
             position = window.screen_to_virtual_coords(*event.pos)
             if BOARD.collidepoint(position):
-                if page == 'ai_easy' and animation is not None and animation.active:
+                if ai_page and animation is not None and animation.active:
                     return page, None
                 column = int((position[0] - BOARD.x) // SQUARE_SIZE)
                 row = int((position[1] - BOARD.y) // SQUARE_SIZE)
-                if page == 'ai_easy' and game.current_turn is Color.BLACK:
+                if ai_page and game.current_turn is Color.BLACK:
                     return page, None
                 game.handle_click(row, column)
                 return page, None
@@ -44,7 +47,7 @@ def handle_event(window, event, page, buttons, focused, rules_parent='home', gam
             return rules_parent, None
         elif event.key == pygame.K_ESCAPE and page == 'multiplayer':
             return 'modes', None
-        elif event.key == pygame.K_ESCAPE and page == 'ai_easy':
+        elif event.key == pygame.K_ESCAPE and ai_page:
             return 'ai_levels', None
         elif event.key == pygame.K_ESCAPE and page == 'ai_levels':
             return 'modes', None
@@ -73,13 +76,16 @@ def handle_event(window, event, page, buttons, focused, rules_parent='home', gam
                 button.checked = not button.checked
             elif button.action == 'confirm_exit':
                 game.reset()
-                if rules_parent == 'ai_easy' and animation is not None:
+                if rules_parent in AI_LEVELS and animation is not None:
                     animation.advance(animation.DURATION_MS)
-                return ('ai_levels' if rules_parent == 'ai_easy' else 'modes'), None
+                return ('ai_levels' if rules_parent in AI_LEVELS else 'modes'), None
+            elif button.action in ('restart_game', 'return_to_menu'):
+                game.reset()
+                return ('home' if button.action == 'return_to_menu' else rules_parent), None
             elif button.action in ('close_rules', 'cancel_exit'):
                 return rules_parent, None
             elif button.action:
-                if page in ('multiplayer', 'ai_easy') and button.action in ('modes', 'ai_levels'):
+                if game_page and button.action in ('modes', 'ai_levels'):
                     if game.move_count or game.pending_promotion_move is not None:
                         return 'confirm_exit', 0
                 return button.action, None

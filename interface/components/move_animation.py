@@ -1,7 +1,7 @@
 class MoveAnimation:
     """Estado visual de uma jogada, independente do tabuleiro atualizado."""
 
-    DURATION_MS = 350
+    DURATION_MS = 700
 
     def __init__(self):
         self.board = None

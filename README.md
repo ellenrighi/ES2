@@ -37,14 +37,16 @@ O PPlay já está incluído no repositório.
 - **Multiplayer** abre uma partida local para duas pessoas no mesmo computador. Clique em uma peça e depois no destino para mover ou capturar. O rodapé informa o turno e o resultado da ação.
 - **Regras**, na tela inicial, e o **ícone de livro**, no tabuleiro, abrem o resumo com fundo semitransparente. O **×** ou **Esc** fecha o pop-up e retorna à tela de origem.
 - O interruptor **Dicas**, no cabeçalho, mostra ou oculta os destinos permitidos para a peça selecionada.
-- **Vs IA** abre o menu de dificuldade: **Fácil** está disponível; **Médio** e **Difícil** ficam desabilitados. No Fácil, você controla as brancas e a IA responde com jogadas aleatórias válidas pelas pretas.
+- **Vs IA** oferece os níveis **Fácil**, **Médio** e **Difícil**. Você joga com as brancas e a IA joga com as pretas. No Fácil, a IA escolhe uma jogada legal aleatória. No Médio e no Difícil, ela usa Minimax com profundidade 2 e 4, respectivamente.
 - A **seta no canto superior esquerdo** ou **Esc** volta do tabuleiro à seleção de modo e da seleção à tela inicial.
 - Use o mouse ou **Tab / Shift+Tab** e **Enter / Espaço** para navegar pelos botões ativos.
 - Feche a janela para sair. A interface se adapta ao tamanho da janela mantendo as proporções.
 
 O tabuleiro usa o estado da partida e as regras do backend, incluindo capturas, roque, en passant e bloqueio de jogadas que exponham o próprio rei. Na promoção, escolha uma peça no pop-up ou use Q (dama), R (torre), B (bispo) ou N (cavalo). Abrir as regras preserva a partida. Ao voltar ao menu após uma jogada, uma confirmação permite continuar jogando ou sair e reiniciar. Reiniciar o aplicativo inicia outra partida.
 
-As partidas de Multiplayer e Vs IA são independentes. Confirmar a saída reinicia apenas a partida do modo atual. Na partida contra IA, a seta ou Esc retorna ao menu de dificuldade; dali, retorna à seleção de modo. Não há multiplayer online nem encerramento automático por xeque-mate ou empate.
+Cada dificuldade tem sua própria partida, independente do Multiplayer. Confirmar a saída reinicia apenas a partida atual. Na partida contra IA, a seta ou Esc retorna ao menu de dificuldade; dali, retorna à seleção de modo. A tela de resultado mostra quem venceu por xeque-mate ou informa que a partida terminou empatada. No Vs IA, se a IA vencer, aparece a tela de derrota.
+
+Na tela de resultado, **Nova partida** reinicia o jogo no mesmo modo e na mesma dificuldade. **Voltar ao menu** leva à tela inicial.
 
 ## Organização dos arquivos
 

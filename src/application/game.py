@@ -4,36 +4,41 @@ from src.domain.board import Board
 from src.domain.color import Color
 from src.domain.move import Move
 from src.domain.piece import Piece
-from src.ai.random_ai import choose_random_move
+from src.ai.difficulty import Difficulty
+from src.ai.strategy import choose_ai_move
 
 
 class Game:
     """Orquestra o fluxo da partida e estado da interacao do jogador.
 
     Parametros:
-        Nenhum.
+        difficulty (Difficulty): Nivel utilizado nas jogadas da IA.
     Retorno:
         Instancia de ``Game`` pronta para iniciar uma partida.
     """
 
-    def __init__(self) -> None:
+    def __init__(self, difficulty: Difficulty = Difficulty.EASY) -> None:
         """Inicializa tabuleiro, turno, selecao e mensagens de estado.
 
         Parametros:
-            Nenhum.
+            difficulty (Difficulty): Nivel utilizado nas jogadas da IA.
         Retorno:
             None.
         """
+        self.difficulty = difficulty
         self.reset()
 
     def reset(self) -> None:
         """Inicia uma partida vazia de histórico, na posição inicial."""
         self.move_count = 0
+        self.last_move: Move | None = None
         self.board = Board()
         self.current_turn = Color.WHITE
         self.selected_square: tuple[int, int] | None = None
         self.legal_moves_by_dest: dict[tuple[int, int], Move] = {}
         self.pending_promotion_move: Move | None = None
+        self.game_over = False
+        self.winner: Color | None = None
         self.status_message = "Turno: Brancas"
 
     def get_piece(self, row: int, col: int) -> Piece | None:
@@ -56,6 +61,8 @@ class Game:
         Retorno:
             None.
         """
+        if self.game_over:
+            return
         if self.pending_promotion_move is not None:
             self.status_message = "Escolha promocao: Q, R, B ou N."
             return
@@ -121,15 +128,20 @@ class Game:
         legal_moves = self.board.generate_moves_for_piece(row, col)
         self.legal_moves_by_dest = {m.end_pos: m for m in legal_moves}
         self.status_message = f"{self._piece_name(self.board.get_piece(row, col))} selecionada."
+
+    @property
+    def can_play_ai(self) -> bool:
+        return (self.current_turn is Color.BLACK and not self.game_over
+                and self.pending_promotion_move is None)
+
     def play_ai_turn(self) -> Move | None:
-        if self.current_turn is not Color.BLACK:
-             return
+        if not self.can_play_ai:
+            return None
 
-        move = choose_random_move(self.board, Color.BLACK)
-
+        move = choose_ai_move(self.board, Color.BLACK, self.difficulty)
         if move is None:
             self.status_message = "A IA não possui movimentos disponíveis."
-            return
+            return None
 
         if move.requires_promotion:
             move.promotion_piece = "Q"
@@ -146,9 +158,44 @@ class Game:
         """
         self.board.execute_move(move)
         self.move_count += 1
+        self.last_move = move
         self.selected_square = None
         self.legal_moves_by_dest = {}
         self.current_turn = self.current_turn.opposite()
+        self._evaluate_checkmate()
+
+    def _evaluate_checkmate(self) -> None:
+        """Detecta fim de jogo por xeque-mate ou empate (afogamento, repeticao, 50 lances, material)."""
+        if self.board.is_checkmate(self.current_turn):
+            self.winner = self.current_turn.opposite()
+            self.game_over = True
+            self.status_message = (
+                "Pecas brancas venceram"
+                if self.winner is Color.WHITE
+                else "Pecas pretas venceram"
+            )
+            return
+
+        if self.board.is_stalemate(self.current_turn):
+            self.game_over = True
+            self.status_message = "Empate por afogamento"
+            return
+
+        if self.board.is_threefold_repetition():
+            self.game_over = True
+            self.status_message = "Empate por repeticao tripla"
+            return
+
+        if self.board.is_fifty_move_rule():
+            self.game_over = True
+            self.status_message = "Empate pela regra dos 50 lances"
+            return
+
+        if self.board.is_insufficient_material():
+            self.game_over = True
+            self.status_message = "Empate por material insuficiente"
+            return
+
         self.status_message = self._turn_text()
 
     def _turn_text(self) -> str:
