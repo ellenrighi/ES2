@@ -222,16 +222,17 @@ class InterfaceGameTests(unittest.TestCase):
         animation = MoveAnimation()
         update_ai(self.game, 'ai_easy', 0, 800, animation)
         self.assertTrue(animation.active)
-        update_ai(self.game, 'ai_easy', 0, 175, animation)
+        half_duration = animation.DURATION_MS // 2
+        update_ai(self.game, 'ai_easy', 0, half_duration, animation)
         update_ai(self.game, 'rules', 0, 2000, animation)
-        self.assertEqual(animation.elapsed_ms, 175)
+        self.assertEqual(animation.elapsed_ms, half_duration)
         draw(self.window, 'ai_easy', AI_BUTTONS, None, 'home', self.game, animation)
         event = pygame.event.Event(pygame.MOUSEBUTTONDOWN, button=1,
                                    pos=((BOARD.x + 26) * 2, (BOARD.y + 6 * 52 + 26) * 2))
         handle_event(self.window, event, 'ai_easy', AI_BUTTONS, None,
                      'home', self.game, animation)
         self.assertIsNone(self.game.selected_square)
-        update_ai(self.game, 'ai_easy', 0, 175, animation)
+        update_ai(self.game, 'ai_easy', 0, animation.DURATION_MS - half_duration, animation)
         self.assertFalse(animation.active)
         handle_event(self.window, event, 'ai_easy', AI_BUTTONS, None,
                      'home', self.game, animation)
@@ -241,7 +242,7 @@ class InterfaceGameTests(unittest.TestCase):
         animation = MoveAnimation()
         animation.start(self.game.board.copy(),
                         Move((0, 4), (0, 6), is_castling=True))
-        animation.advance(175)
+        animation.advance(animation.DURATION_MS // 2)
         with patch('interface.components.draw_board.draw_piece') as paint:
             draw_board(self.window.screen, self.game, animation=animation)
         self.assertEqual(paint.call_args_list[-2].args[1:],
